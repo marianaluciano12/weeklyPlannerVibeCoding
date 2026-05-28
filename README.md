@@ -1,32 +1,57 @@
-# Welcome to Your First Coding Project
+# Bem-vindo ao teu Primeiro Projeto de Código
 
-This is a simple project to help you get started with Python using your preferred IDE: VSCode, Cursor, or Antigravity.  
-You'll write your very first scripts here, while your AI assistant acts as your tutor and guide.  
-Let's explore this workspace together:
-
----
-
-## 📋 Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Getting to Know Your IDE](#getting-to-know-your-ide)
-   - [Exploring the Project Files](#exploring-the-project-files)
-   - [How to Run Code](#how-to-run-code)
-   - [Setup](#setup)
-     - [Quick Start: Activate Your Environment](#quick-start-activate-your-environment)
-     - [First Time Setup](#first-time-setup)
-   - [Working with Secrets](#working-with-secrets-api-keys-passwords)
-3. [Your First Challenge: Understanding the Code](#your-first-challenge-understanding-the-code)
+Este é um projeto simples para te ajudar a começar com Python no teu IDE preferido.
+Aqui vais escrever os teus primeiros scripts, enquanto o teu assistente de IA atua como tutor e guia.  
+Vamos explorar este espaço de trabalho juntos:
 
 ---
 
-## Prerequisites
+## 📋 Índice
 
-Before you start coding, make sure you have these tools installed on your computer:
+1. [Pré-requisitos](#pré-requisitos)
+2. [Conhecer o teu IDE](#conhecer-o-teu-ide)
+   - [Explorar os Ficheiros do Projeto](#explorar-os-ficheiros-do-projeto)
+   - [Como Executar Código](#como-executar-código)
+   - [Configuração](#configuração)
+     - [Início Rápido: Ativar o Ambiente](#início-rápido-ativar-o-ambiente)
+     - [Configuração Inicial](#configuração-inicial)
+   - [Trabalhar com Segredos](#trabalhar-com-segredos-chaves-api-passwords)
+3. [Primeiro Desafio: Entender o Código](#primeiro-desafio-entender-o-código)
+4. [Referência Rápida de Comandos](#referência-rápida-de-comandos)
 
-### 1. Python 3.13+
+---
 
-Python is the programming language you'll be learning! Let's check if you have it:
+## Pré-requisitos
+
+Antes de começares a programar, certifica-te de que tens estas ferramentas instaladas no teu computador:
+
+### 1. VSCode
+
+O VSCode (Visual Studio Code) é o editor de código que vamos usar. Vamos verificar se já o tens:
+
+```bash
+code --version
+```
+
+**Não tens o VSCode?** Aqui está como instalá-lo:
+
+**🪟 Windows:**
+
+```powershell
+winget install Microsoft.VisualStudioCode
+```
+
+**🍎 Mac:**
+
+```bash
+brew install --cask visual-studio-code
+```
+
+💡 **Extensões recomendadas:** Python (Microsoft), GitLens, Pylance. Clica no ícone de extensões na barra lateral e pesquisa pelo nome.
+
+### 2. Python 3.13+
+
+O Python é a linguagem de programação que vais aprender! Vamos verificar se já o tens:
 
 **🪟 Windows:**
 
@@ -34,139 +59,122 @@ Python is the programming language you'll be learning! Let's check if you have i
 python --version
 ```
 
-**🍎 Mac/Linux:**
+**🍎 Mac:**
 
 ```bash
 python3 --version
 ```
 
-**Don't have Python?** Here's how to install it:
+**Não tens o Python?** Aqui está como instalá-lo:
 
 **🪟 Windows:**
 
-- **Easy way:** Open PowerShell and run:
+```powershell
+winget install Python.Python.3.13
+```
 
-  ```powershell
-  winget install Python.Python.3.13
-  ```
-
-- **Manual way:** Download from [python.org](https://www.python.org/downloads/) and run the installer  
-  ⚠️ **Important:** Check the box "Add Python to PATH" during installation!
+⚠️ Se instalares manualmente, assinala a caixa **"Add Python to PATH"** durante a instalação!
 
 **🍎 Mac:**
 
-- **Easy way (using Homebrew):**
+```bash
+brew install python
+```
 
-  ```bash
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  brew install python3
-  ```
+### 3. Git
 
-- **Manual way:** Download from [python.org](https://www.python.org/downloads/) and run the installer
-
-### 2. Git
-
-Git helps you save and track changes to your code. Let's check if you have it:
+O Git ajuda-te a guardar e acompanhar as alterações ao teu código. Vamos verificar se já o tens:
 
 ```bash
 git --version
 ```
 
-**Don't have Git?** Here's how to install it:
+**Não tens o Git?** Aqui está como instalá-lo:
 
 **🪟 Windows:**
 
-- **Easy way:** Open PowerShell and run:
-
-  ```powershell
-  winget install Git.Git
-  ```
-
-- **Manual way:** Download from [git-scm.com](https://git-scm.com/downloads)
+```powershell
+winget install Git.Git
+```
 
 **🍎 Mac:**
 
-- **Easy way (using Homebrew):**
+```bash
+brew install git
+```
 
-  ```bash
-  brew install git
-  ```
+**⚙️ Configurar o Git (obrigatório, uma única vez)**
 
-- **Manual way:** Download from [git-scm.com](https://git-scm.com/downloads)
+Antes de usares o Git pela primeira vez, identifica-te. Usa o teu nome real e o email com que criaste a conta no GitHub:
 
-### 3. IDE Choice (VSCode, Cursor, or Antigravity)
+```bash
+git config --global user.name "O Teu Nome"
+git config --global user.email "o.teu@email.com"
+```
 
-Choose one of these IDE options:
+**Precisas de ajuda detalhada com a configuração?** Consulta os guias completos:
 
-- [VSCode](https://code.visualstudio.com)
-- [Cursor](https://cursor.sh)
-- [Antigravity](https://antigravity.dev)
-
-> **💡 Note:** This project works with VSCode, Cursor, and Antigravity.
-
-**Need detailed setup help?** Check out the full guides:
-
-- [🪟 Windows Setup Guide](setup_windows.md)
-- [🍎 Mac Setup Guide](setup_mac.md)
+- [🪟 Guia de Configuração Windows](setup_windows.md)
+- [🍎 Guia de Configuração Mac](setup_mac.md)
 
 ---
 
-## Getting to Know Your IDE
+## Conhecer o teu IDE
 
-Your screen has a few key areas:
+O teu ecrã tem algumas áreas principais:
 
-- **Explorer (Left Side)**: Like a file cabinet — it shows all project files (like `main.py`). Click a file to open it.
-- **Editor (Center)**: Your workbench. This is where you’ll write and edit code.
-- **Terminal (Bottom)**: Your command center. Run commands here to execute your scripts and see results.
-- **AI Chat Panel (Right Side)**: Your AI assistant. You can ask questions about your code, concepts, or next steps.  
-  Remember: the AI will explain logic simply, not overwhelm you with code details.
+- **Explorer (Lado Esquerdo)**: Como um armário de ficheiros — mostra todos os ficheiros do projeto (como `main.py`). Clica num ficheiro para o abrir.
+- **Editor (Centro)**: A tua bancada de trabalho. Aqui vais escrever e editar código.
+- **Terminal (Em baixo)**: O teu centro de comando. Executa comandos aqui para correr os teus scripts e ver os resultados.
+- **Painel de Chat IA (Lado Direito)**: O teu assistente de IA. Podes fazer perguntas sobre o teu código, conceitos ou próximos passos.  
+  Lembra-te: a IA vai explicar a lógica de forma simples, não vai sobrecarregar-te com detalhes de código.
 
-### Exploring the Project Files
+### Explorar os Ficheiros do Projeto
 
-- **`main.py`**: This is the main file where you will write your Python code. For now, this is the only file you need to focus on.
-- **Other Files**: You might see config files like `.cursorrules`, `.github/copilot-instructions.md`, and `.antigravityrules`, plus files like `requirements.txt` and `.vscode`. Don’t worry about these — they exist to make the environment easier and to guide the AI assistant.
+- **`main.py`**: Este é o ficheiro principal onde vais escrever o teu código Python. Por agora, é o único ficheiro em que precisas de te concentrar.
+- **Outros Ficheiros**: Podes ver ficheiros de configuração como `.github/copilot-instructions.md` e `CLAUDE.md`, além de ficheiros como `requirements.txt` e `.vscode`. Não te preocupes com estes — existem para facilitar o ambiente e orientar o assistente de IA.
 
 ---
 
-### How to Run Code
+### Como Executar Código
 
-Now let’s run the code you just explored:
+Vamos executar o código que acabaste de explorar:
 
-1. Make sure `main.py` is open in the **Editor**.
-2. Click into the **Terminal** at the bottom.
-3. Run this command:
+1. Certifica-te de que `main.py` está aberto no **Editor**.
+2. Clica no **Terminal** em baixo.
+3. Executa este comando:
 
 ```bash
 python main.py
 ```
 
-1. You should see this message appear in the terminal:
+4. Deves ver esta mensagem aparecer no terminal:
 
 ```sh
 Hello, world!
 ```
 
-🎉 Congrats, you just ran your first Python program in your IDE!
+🎉 Parabéns, acabaste de executar o teu primeiro programa Python no IDE!
 
 ---
 
-### Setup
+### Configuração
 
-**Good news!** A Python environment is already prepared for you. 🎉  
+**Boas notícias!** Um ambiente Python já está preparado para ti. 🎉
 
-When you open a terminal, you might see `(.venv)` at the start of the prompt, like this:
+Quando abres um terminal, podes ver `(.venv)` no início da linha, assim:
 
 ```sh
 (.venv) vibecoding-02-03-68307615:$
 ```
 
-This means your environment is ready! If you see this, skip to [Your First Challenge](#your-first-challenge-understanding-the-code).
+Isto significa que o teu ambiente está pronto! Se vires isto, passa para [O Teu Primeiro Desafio](#primeiro-desafio-entender-o-código).
 
 ---
 
-#### Quick Start: Activate Your Environment
+#### Início Rápido: Ativar o Ambiente
 
-If you don't see `(.venv)` in your terminal, run this commands:
+Se não vires `(.venv)` no teu terminal, executa este comando:
 
 **🪟 Windows:**
 
@@ -182,53 +190,53 @@ source .venv/bin/activate
 
 ---
 
-#### First Time Setup
+#### Configuração Inicial
 
-Need to create your environment from scratch? Follow the full setup guide for your system:
+Precisas de criar o teu ambiente do zero? Segue o guia completo para o teu sistema:
 
-- **[🪟 Windows Setup Guide](setup_windows.md)** - Complete instructions including Python installation
-- **[🍎 Mac Setup Guide](setup_mac.md)** - Complete instructions including Python installation
+- **[🪟 Guia de Configuração Windows](setup_windows.md)** — Instruções completas incluindo instalação do Python
+- **[🍎 Guia de Configuração Mac](setup_mac.md)** — Instruções completas incluindo instalação do Python
 
 ---
 
-### Working with Secrets (API Keys, Passwords)
+### Trabalhar com Segredos (Chaves API, Passwords)
 
-**Important:** Never put passwords or API keys directly in your code!
+**Importante:** Nunca coloque passwords ou chaves API diretamente no teu código!
 
-#### Using a `.env` File
+#### Usar um Ficheiro `.env`
 
-When you need to store secrets (like API keys), create a file named `.env` in your project folder:
+Quando precisares de guardar segredos (como chaves API), cria um ficheiro chamado `.env` na pasta do teu projeto:
 
-1. Right-click in the Explorer → New File → Name it `.env`
-2. Add your secrets, one per line:
+1. Clica com o botão direito no Explorer → Novo Ficheiro → Chama-lhe `.env`
+2. Adiciona os teus segredos, um por linha:
 
    ```sh
-   API_KEY=your_secret_key_here
-   PASSWORD=your_password_here
+   API_KEY=a_tua_chave_secreta_aqui
+   PASSWORD=a_tua_password_aqui
    ```
 
-3. Ask your AI assistant: **"Use my API key from the .env file"**
+3. Pede ao teu assistente de IA: **"Usa a minha chave API do ficheiro .env"**
 
-Your AI assistant will help you load and use these secrets properly in your code.
+O teu assistente de IA vai ajudar-te a carregar e usar estes segredos corretamente no teu código.
 
-> **💡 Tip:** Your `.env` file is already protected by `.gitignore`, so it won't be uploaded to GitHub. Your secrets stay private!
+> **💡 Dica:** O teu ficheiro `.env` já está protegido pelo `.gitignore`, por isso não será enviado para o GitHub. Os teus segredos ficam privados!
 
-#### ⚠️ Important Rules
+#### ⚠️ Regras Importantes
 
-- **Never** write secrets directly in your code
-- **Always** use a `.env` file for passwords, API keys, and tokens
-- **Ask your AI assistant** to help you use environment variables when you need them
+- **Nunca** escrevas segredos diretamente no teu código
+- **Sempre** usa um ficheiro `.env` para passwords, chaves API e tokens
+- **Pede ao teu assistente de IA** ajuda para usar variáveis de ambiente quando precisares
 
 ---
 
-## Your First Challenge: Understanding the Code
+## Primeiro Desafio: Entender o Código
 
-Before running anything, let’s ask your AI assistant what the code means.
+Antes de executar qualquer coisa, vamos pedir ao teu assistente de IA para explicar o que o código faz.
 
-In the **AI Chat panel**, on the right side, type:
+No **painel de Chat IA**, no lado direito, escreve:
 
 ```text
-Can you explain what the code in `main.py` does?
+Podes explicar o que o código em `main.py` faz?
 ```
 
-You’ll get a simple, logical explanation of what the program does, not just a code breakdown.
+Vais receber uma explicação simples e lógica do que o programa faz, não apenas uma análise do código.
