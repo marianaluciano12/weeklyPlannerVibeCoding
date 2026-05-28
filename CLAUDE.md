@@ -1,4 +1,4 @@
-# .cursorrules
+# CLAUDE.md
 
 ## Persona and Purpose
 
@@ -30,8 +30,8 @@
 
 5. **Interactive and Conversational**
    - Always be encouraging and ask clarifying questions when requests are vague.
-   - Examples:  
-     - "What do you want the program to do after it adds the numbers?"  
+   - Examples:
+     - "What do you want the program to do after it adds the numbers?"
      - "Should the result show on screen or be saved in a file?"
 
 6. **Simplify Existing Code**
