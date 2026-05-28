@@ -34,13 +34,7 @@ python --version
 
 **Erros como "Python is not recognized":**
 
-> **Método 1:** Instalar o Python usando o PowerShell
-
-```powershell
-winget install Python.Python.3.13
-```
-
-> **Método 2:** Download manual
+> **Método recomendado:** Download manual (instalador oficial)
 
 1. Vai a [https://www.python.org/downloads/](https://www.python.org/downloads/)
 2. Clica no botão amarelo "Download Python 3.x.x".
@@ -51,6 +45,14 @@ winget install Python.Python.3.13
 4. Clica em "Install Now" e aguarda.
 5. No fim, clica em "Disable path length limit" se aparecer essa opção — é recomendado.
 6. Clica em "Close".
+
+> **Método alternativo:** Instalar o Python usando o PowerShell
+
+```powershell
+winget install Python.Python.3.13
+```
+
+⚠️ Com este método, o PATH pode não ser configurado automaticamente. Se após a instalação o comando `python --version` não funcionar, usa o método recomendado acima.
 
 ✅ **Verificar a instalação**
 
@@ -70,19 +72,21 @@ pip --version
 
 ### Passo 3: Instalar o Git
 
-> **Método 1:** Instalar usando o PowerShell
+> **Método recomendado:** Download manual (instalador oficial)
+
+1. Vai a [https://git-scm.com/download/win](https://git-scm.com/download/win)
+2. O download começa automaticamente. Abre o instalador.
+3. Deixa todas as opções por defeito exceto uma: em **"Choosing the default editor used by Git"**, seleciona **"Use Visual Studio Code as Git's default editor"**.
+4. Em **"Adjusting your PATH environment"**, mantém **"Git from the command line and also from 3rd-party software"** — isto é essencial para que o `git` funcione no terminal.
+5. Continua a clicar "Next" até ao fim e clica "Install".
+
+> **Método alternativo:** Instalar usando o PowerShell
 
 ```powershell
 winget install Git.Git
 ```
 
-> **Método 2:** Download manual
-
-1. Vai a [https://git-scm.com/download/win](https://git-scm.com/download/win)
-2. O download começa automaticamente. Abre o instalador.
-3. Deixa todas as opções por defeito exceto uma: em **"Choosing the default editor used by Git"**, seleciona **"Use Visual Studio Code as Git's default editor"**.
-4. Em **"Adjusting your PATH environment"**, mantém **"Git from the command line and also from 3rd-party software"**.
-5. Continua a clicar "Next" até ao fim e clica "Install".
+⚠️ Com este método, o PATH pode não ser configurado automaticamente. Se após a instalação o `git --version` não funcionar, segue o método recomendado acima ou adiciona manualmente o Git ao PATH (ver secção "Resolução de Problemas").
 
 ✅ **Verificar a instalação**
 
@@ -200,8 +204,16 @@ Isto significa que o Python não está no PATH. Resolve assim:
 
 **❓ "git" não é reconhecido como comando**
 
-Fecha e volta a abrir o Terminal/PowerShell após a instalação do Git.  
-Se persistir: Painel de Controlo → Sistema → Variáveis de Ambiente → PATH → verifica se o caminho do Git está lá (normalmente `C:\Program Files\Git\cmd`)
+Fecha e volta a abrir o Terminal/PowerShell após a instalação do Git.
+
+Se persistir, adiciona o Git manualmente ao PATH:
+
+1. Abre o menu Iniciar e pesquisa por **"Variáveis de Ambiente"**
+2. Clica em **"Editar as variáveis de ambiente do sistema"**
+3. Clica em **"Variáveis de Ambiente..."**
+4. Em **"Variáveis do sistema"**, seleciona **"Path"** e clica em **"Editar"**
+5. Clica em **"Novo"** e adiciona: `C:\Program Files\Git\cmd`
+6. Clica "OK" em todas as janelas, fecha e volta a abrir o terminal.
 
 **❓ VSCode não abre ficheiros .py com o Python correto**
 
