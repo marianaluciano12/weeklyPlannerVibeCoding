@@ -207,3 +207,185 @@ def find_daily_slots(busy_periods, duration_minutes: int, days: int, preferences
             selected_slots.append(slot)
 
     return selected_slots
+
+
+def day_is_allowed(day_date, allowed_days: str) -> bool:
+    weekday = day_date.weekday()
+
+    if allowed_days == "weekdays":
+        return weekday < 5
+
+    if allowed_days == "weekends":
+        return weekday >= 5
+
+    return True
+
+
+def build_task_preferences(base_preferences, task_preferences):
+    preferences = merge_preferences(base_preferences)
+    task_preferences = task_preferences or {}
+
+    preferred_time = task_preferences.get("preferred_time_of_day")
+
+    if preferred_time:
+        preferences["preferred_time_of_day"] = preferred_time
+
+    preferred_window_start = task_preferences.get("preferred_window_start")
+    preferred_window_end = task_preferences.get("preferred_window_end")
+
+    if preferred_window_start and preferred_window_end:
+        preferences["weekday_start"] = preferred_window_start
+        preferences["weekday_end"] = preferred_window_end
+        preferences["weekend_start"] = preferred_window_start
+        preferences["weekend_end"] = preferred_window_end
+
+    return preferences
+
+
+def find_best_candidate_for_day(
+    day_date,
+    day_offset,
+    busy_ranges,
+    duration,
+    now,
+    preferences
+):
+    windows = get_daily_windows(day_date, preferences)
+
+    best_slot = None
+    best_score = float("inf")
+
+    for window_start, window_end in windows:
+        candidate_start = window_start
+
+        if candidate_start < now:
+            candidate_start = round_up_to_next_15_minutes(now)
+
+        while candidate_start + duration <= window_end:
+            candidate_end = candidate_start + duration
+
+            has_conflict = any(
+                overlaps(candidate_start, candidate_end, busy_start, busy_end)
+                for busy_start, busy_end in busy_ranges
+            )
+
+            if not has_conflict:
+                score = score_slot(
+                    candidate_start,
+                    window_start,
+                    day_offset,
+                    preferences
+                )
+
+                if score < best_score:
+                    best_score = score
+                    best_slot = {
+                        "start": candidate_start.isoformat(),
+                        "end": candidate_end.isoformat(),
+                        "score": score,
+                        "day": day_date.isoformat(),
+                    }
+
+            candidate_start += timedelta(minutes=15)
+
+    return best_slot
+
+
+def find_slots_for_task(
+    busy_periods,
+    duration_minutes: int,
+    sessions_count: int,
+    days: int,
+    base_preferences=None,
+    task_preferences=None
+):
+    preferences = build_task_preferences(base_preferences, task_preferences)
+
+    allowed_days = "any"
+
+    if task_preferences:
+        allowed_days = task_preferences.get("allowed_days") or "any"
+
+    duration = timedelta(minutes=duration_minutes)
+    minimum_gap = timedelta(minutes=int(preferences["minimum_gap_minutes"]))
+
+    busy_ranges = [
+        (
+            parse_datetime(period["start"]) - minimum_gap,
+            parse_datetime(period["end"]) + minimum_gap
+        )
+        for period in busy_periods
+    ]
+
+    now = datetime.now(TZ)
+    today = now.date()
+
+    frequency = "weekly"
+
+    if task_preferences:
+        frequency = task_preferences.get("frequency") or "weekly"
+
+    selected_slots = []
+
+    # Daily habits should try to get one slot per allowed day.
+    if frequency == "daily":
+        for day_offset in range(days):
+            current_day = today + timedelta(days=day_offset)
+
+            if not day_is_allowed(current_day, allowed_days):
+                continue
+
+            slot = find_best_candidate_for_day(
+                day_date=current_day,
+                day_offset=day_offset,
+                busy_ranges=busy_ranges,
+                duration=duration,
+                now=now,
+                preferences=preferences
+            )
+
+            if slot:
+                selected_slots.append({
+                    "start": slot["start"],
+                    "end": slot["end"],
+                })
+
+            if len(selected_slots) >= sessions_count:
+                break
+
+        return selected_slots
+
+    # Weekly tasks should pick the best N days.
+    candidates = []
+
+    for day_offset in range(days):
+        current_day = today + timedelta(days=day_offset)
+
+        if not day_is_allowed(current_day, allowed_days):
+            continue
+
+        slot = find_best_candidate_for_day(
+            day_date=current_day,
+            day_offset=day_offset,
+            busy_ranges=busy_ranges,
+            duration=duration,
+            now=now,
+            preferences=preferences
+        )
+
+        if slot:
+            candidates.append(slot)
+
+    candidates.sort(key=lambda slot: slot["score"])
+
+    selected = candidates[:sessions_count]
+
+    selected.sort(key=lambda slot: slot["start"])
+
+    return [
+        {
+            "start": slot["start"],
+            "end": slot["end"],
+        }
+        for slot in selected
+    ]

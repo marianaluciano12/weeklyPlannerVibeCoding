@@ -16,7 +16,7 @@ from calendar_service import (
       get_free_busy,
       delete_calendar_event
 )
-from scheduler import find_daily_slots
+from scheduler import find_daily_slots, find_slots_for_task
 
 TIMEZONE = "Europe/Lisbon"
 TZ = ZoneInfo(TIMEZONE)
@@ -120,7 +120,98 @@ def assistant(request: AssistantRequest):
             "created_events": [created_event],
             "action": action
         }
+    if action_type == "schedule_plan":
+        tasks = action.get("tasks") or []
 
+        if not tasks:
+            return {
+                "status": "error",
+                "message": "I understood this as a weekly plan, but no tasks were returned.",
+                "action": action
+            }
+
+        now = datetime.now(TZ)
+        days = 7
+        horizon = now + timedelta(days=days)
+
+        working_busy_periods = get_free_busy(
+            now.isoformat(),
+            horizon.isoformat()
+        )
+
+        created_events = []
+        task_summaries = []
+
+        reminder_minutes = 10
+
+        if preferences:
+            reminder_minutes = preferences.get("default_reminder_minutes", 10)
+
+        def task_sort_key(task):
+            score = 0
+
+            # Tasks with restricted windows should be scheduled first.
+            if task.get("preferred_window_start") and task.get("preferred_window_end"):
+                score -= 100
+
+            if task.get("allowed_days") and task.get("allowed_days") != "any":
+                score -= 50
+
+            # Longer tasks are harder to place, so schedule earlier.
+            score -= int(task.get("duration_minutes") or 30)
+
+            return score
+
+        sorted_tasks = sorted(tasks, key=task_sort_key)
+
+        for task in sorted_tasks:
+            title = task.get("title") or "Scheduled task"
+            duration_minutes = int(task.get("duration_minutes") or 30)
+            sessions_count = int(task.get("sessions_count") or 1)
+            task_days = int(task.get("days") or 7)
+            category = task.get("category") or "personal"
+
+            slots = find_slots_for_task(
+                busy_periods=working_busy_periods,
+                duration_minutes=duration_minutes,
+                sessions_count=sessions_count,
+                days=task_days,
+                base_preferences=preferences,
+                task_preferences=task
+            )
+
+            task_created_events = []
+
+            for slot in slots:
+                created_event = create_calendar_event(
+                    title=title,
+                    start_datetime=slot["start"],
+                    end_datetime=slot["end"],
+                    description=f"Scheduled by AI Calendar Assistant. Category: {category}",
+                    reminder_minutes_before=reminder_minutes,
+                    category=category
+                )
+
+                created_events.append(created_event)
+                task_created_events.append(created_event)
+
+                # Important: add newly scheduled events to the busy list,
+                # so the next task does not get scheduled on top of this one.
+                working_busy_periods.append({
+                    "start": slot["start"],
+                    "end": slot["end"]
+                })
+
+            task_summaries.append(
+                f"{title}: {len(task_created_events)}/{sessions_count} scheduled"
+            )
+
+        return {
+            "status": "success",
+            "message": "Weekly plan created. " + " · ".join(task_summaries),
+            "created_events": created_events,
+            "action": action
+        }
     if action_type == "schedule_habit":
         title = action.get("title") or "Habit"
         duration_minutes = action.get("duration_minutes") or 20

@@ -69,13 +69,28 @@ Return ONLY valid JSON.
 
 JSON schema:
 {{
-  "action": "create_reminder" | "schedule_habit" | "unknown",
+  "action": "create_reminder" | "schedule_habit" | "schedule_plan" | "unknown",
   "title": string | null,
   "start_datetime": string | null,
   "duration_minutes": integer | null,
-  "frequency": "once" | "daily" | null,
+  "frequency": "once" | "daily" | "weekly" | null,
   "days": integer | null,
-  "category": "hobby" | "errand" | "exercise" | "work" | "chore" | "health" | "study" | "relationship" | "personal" | "social" | null,
+  "category": "hobby" | "errand" | "exercise" | "work" | "chore" | "health" | "study" | "relationship" | "personal" | null,
+  "tasks": [
+    {{
+      "title": string,
+      "duration_minutes": integer,
+      "sessions_count": integer,
+      "frequency": "daily" | "weekly",
+      "days": integer,
+      "category": "hobby" | "errand" | "exercise" | "work" | "chore" | "health" | "study" | "relationship" | "personal",
+      "preferred_time_of_day": "earliest" | "morning" | "afternoon" | "evening" | "balanced",
+      "allowed_days": "any" | "weekdays" | "weekends",
+      "preferred_window_start": string | null,
+      "preferred_window_end": string | null,
+      "notes": string | null
+    }}
+  ] | null,
   "notes": string | null
 }}
 
@@ -109,6 +124,21 @@ Category rules:
 - social events, parties, gatherings = social
 - if unsure, use personal
 
+Multi-task planning rules:
+- If the user asks for more than one thing to be scheduled, use action "schedule_plan".
+- For schedule_plan, put every activity inside the tasks array.
+- For "every day of the week", use sessions_count 7, frequency "daily", days 7.
+- For "3 times per week", use sessions_count 3, frequency "weekly", days 7.
+- If duration is missing:
+  - gym/exercise = 60 minutes
+  - errands = 30 minutes
+  - chores = 30 minutes
+  - hobbies = 30 minutes
+  - study = 45 minutes
+- If the user says "morning", use preferred_time_of_day "morning".
+- If the user says "before work", use allowed_days "weekdays", preferred_window_start "8:00", preferred_window_end "09:00".
+- If there is no specific preference, use preferred_time_of_day "balanced", allowed_days "any", preferred_window_start null, preferred_window_end null.
+
 User message:
 {message}
 """
@@ -135,5 +165,6 @@ User message:
     "frequency": None,
     "days": None,
     "category": None,
+    "tasks": None,
     "notes": "Could not parse LLM response."
         }
