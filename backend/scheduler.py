@@ -11,14 +11,17 @@ TIMEZONE = os.getenv("TIMEZONE", "Europe/Lisbon")
 TZ = ZoneInfo(TIMEZONE)
 
 DEFAULT_PREFERENCES = {
-    "weekday_start": "17:00",
-    "weekday_end": "22:30",
+    "day_start": "07:00",
+"work_start": "09:00",
+"work_end": "17:00",
     "weekend_start": "10:00",
     "weekend_end": "22:00",
     "minimum_gap_minutes": 15,
     "default_reminder_minutes": 10,
     "preferred_time_of_day": "balanced",
     "avoid_after": "21:30",
+    "custom_window_start": None,
+    "custom_window_end": None,
 }
 
 
@@ -58,14 +61,47 @@ def round_up_to_next_15_minutes(dt: datetime) -> datetime:
 
 
 def get_daily_windows(day_date, preferences):
+    custom_start = preferences.get("custom_window_start")
+    custom_end = preferences.get("custom_window_end")
+
+    if custom_start and custom_end:
+        start = parse_time(custom_start)
+        end = parse_time(custom_end)
+
+        window_start = datetime.combine(day_date, start, TZ)
+        window_end = datetime.combine(day_date, end, TZ)
+
+        if window_start >= window_end:
+            return []
+
+        return [(window_start, window_end)]
+
     weekday = day_date.weekday()
 
     if weekday < 5:
-        start = parse_time(preferences["weekday_start"])
-        end = parse_time(preferences["weekday_end"])
-    else:
-        start = parse_time(preferences["weekend_start"])
-        end = parse_time(preferences["weekend_end"])
+        day_start = parse_time(preferences["day_start"])
+        work_start = parse_time(preferences["work_start"])
+        work_end = parse_time(preferences["work_end"])
+        day_end = parse_time(preferences["avoid_after"])
+
+        windows = []
+
+        morning_start = datetime.combine(day_date, day_start, TZ)
+        morning_end = datetime.combine(day_date, work_start, TZ)
+
+        evening_start = datetime.combine(day_date, work_end, TZ)
+        evening_end = datetime.combine(day_date, day_end, TZ)
+
+        if morning_start < morning_end:
+            windows.append((morning_start, morning_end))
+
+        if evening_start < evening_end:
+            windows.append((evening_start, evening_end))
+
+        return windows
+
+    start = parse_time(preferences["weekend_start"])
+    end = parse_time(preferences["weekend_end"])
 
     window_start = datetime.combine(day_date, start, TZ)
     window_end = datetime.combine(day_date, end, TZ)
@@ -234,10 +270,8 @@ def build_task_preferences(base_preferences, task_preferences):
     preferred_window_end = task_preferences.get("preferred_window_end")
 
     if preferred_window_start and preferred_window_end:
-        preferences["weekday_start"] = preferred_window_start
-        preferences["weekday_end"] = preferred_window_end
-        preferences["weekend_start"] = preferred_window_start
-        preferences["weekend_end"] = preferred_window_end
+        preferences["custom_window_start"] = preferred_window_start
+        preferences["custom_window_end"] = preferred_window_end
 
     return preferences
 

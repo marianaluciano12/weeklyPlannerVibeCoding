@@ -26,8 +26,9 @@ function App() {
   const [createdPlanEvents, setCreatedPlanEvents] = useState([]);
 
   const [preferences, setPreferences] = useState({
-    weekday_start: "17:00",
-    weekday_end: "22:30",
+    day_start: "07:00",
+    work_start: "09:00",
+    work_end: "17:00",
     weekend_start: "10:00",
     weekend_end: "22:00",
     minimum_gap_minutes: 15,
@@ -363,8 +364,13 @@ function App() {
 
                   <div className="preferences-summary">
                     <span className="summary-chip">
-                      <strong>Dias úteis</strong>
-                      {preferences.weekday_start}–{preferences.weekday_end}
+                      <strong>Trabalho</strong>
+                      {preferences.work_start}–{preferences.work_end}
+                    </span>
+
+                    <span className="summary-chip">
+                      <strong>Tempo livre</strong>
+                      antes/depois do trabalho
                     </span>
 
                     <span className="summary-chip">
@@ -407,35 +413,46 @@ function App() {
                 <div className="preferences-section-card">
                   <div className="preferences-section-header">
                     <div>
-                      <p className="preferences-section-label">Disponibilidade</p>
-                      <h3>Quando costumas estar livre?</h3>
+                      <p className="preferences-section-label">Horário de trabalho</p>
+                      <h3>Qual é o teu horário de trabalho?</h3>
                     </div>
 
                     <p>
-                      Estas janelas ajudam o assistente a encontrar horários realistas
-                      para hobbies, hábitos e tarefas pessoais.
+                      Nos dias úteis, o assistente considera como tempo livre tudo
+                      o que fica antes e depois do teu horário de trabalho.
                     </p>
                   </div>
 
                   <div className="preferences-grid">
                     <label className="preference-field">
-                      <span>Início dias úteis</span>
+                      <span>Primeiro horário do dia</span>
                       <input
                         type="time"
-                        value={preferences.weekday_start}
+                        value={preferences.day_start}
                         onChange={(event) =>
-                          updatePreference("weekday_start", event.target.value)
+                          updatePreference("day_start", event.target.value)
                         }
                       />
                     </label>
 
                     <label className="preference-field">
-                      <span>Fim dias úteis</span>
+                      <span>Início do trabalho</span>
                       <input
                         type="time"
-                        value={preferences.weekday_end}
+                        value={preferences.work_start}
                         onChange={(event) =>
-                          updatePreference("weekday_end", event.target.value)
+                          updatePreference("work_start", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label className="preference-field">
+                      <span>Fim do trabalho</span>
+                      <input
+                        type="time"
+                        value={preferences.work_end}
+                        onChange={(event) =>
+                          updatePreference("work_end", event.target.value)
                         }
                       />
                     </label>

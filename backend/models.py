@@ -4,10 +4,11 @@ from pydantic import BaseModel
 
 
 class PlanningPreferences(BaseModel):
-    weekday_start: str = "17:00"
-    weekday_end: str = "22:30"
+    day_start: str = "08:00"
+    work_start: str = "09:00"
+    work_end: str = "17:00"
     weekend_start: str = "10:00"
-    weekend_end: str = "22:00"
+    weekend_end: str = "23:00"
     minimum_gap_minutes: int = 15
     default_reminder_minutes: int = 10
     preferred_time_of_day: Literal[

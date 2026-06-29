@@ -7,4 +7,5 @@ google-auth-oauthlib
 google-auth-httplib2
 google-genai
 python-dateutil
-pip install tzdata
+tzdata
+openai
