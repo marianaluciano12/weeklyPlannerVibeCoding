@@ -25,6 +25,8 @@ function App() {
   avoid_after: "21:30",
 });
 
+const [selectedEvent, setSelectedEvent] = useState(null);
+
 const [showPreferences, setShowPreferences] = useState(false);
 
 function getPlanningStyleLabel(value) {
@@ -177,7 +179,87 @@ const deleteCalendarEvent = useCallback(async (eventClickInfo) => {
   }
 }, []);
 
+function formatEventDate(dateValue) {
+  if (!dateValue) return "No date";
 
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(dateValue);
+}
+
+function openEventPopup(eventClickInfo) {
+  eventClickInfo.jsEvent.preventDefault();
+
+  setSelectedEvent({
+    id: eventClickInfo.event.id,
+    title:
+      eventClickInfo.event.extendedProps.originalTitle ||
+      eventClickInfo.event.title,
+    displayTitle: eventClickInfo.event.title,
+    start: eventClickInfo.event.start,
+    end: eventClickInfo.event.end,
+    category: eventClickInfo.event.extendedProps.category || "personal",
+    emoji: eventClickInfo.event.extendedProps.emoji || "✨",
+  });
+}
+
+function editSelectedEvent() {
+  if (!selectedEvent) return;
+
+  setAssistantReply(
+    `Edit feature coming soon for: ${selectedEvent.title}`
+  );
+  setStatusType("success");
+  closeEventPopup();
+}
+
+function closeEventPopup() {
+  setSelectedEvent(null);
+}
+
+async function deleteSelectedEvent() {
+  if (!selectedEvent) return;
+
+  const shouldDelete = window.confirm(
+    `Delete "${selectedEvent.title}" from your Google Calendar?`
+  );
+
+  if (!shouldDelete) return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/events/${encodeURIComponent(selectedEvent.id)}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.status === "error") {
+      throw new Error(data.message || "Could not delete event.");
+    }
+
+    setAssistantReply(`Deleted: ${selectedEvent.title}`);
+    setStatusType("success");
+
+    closeEventPopup();
+
+    if (calendarRef.current) {
+      calendarRef.current.getApi().refetchEvents();
+    }
+  } catch (error) {
+    console.error(error);
+    setAssistantReply(
+      error.message || "Something went wrong while deleting the event."
+    );
+    setStatusType("error");
+  }
+}
 
 
   return (
@@ -224,32 +306,28 @@ const deleteCalendarEvent = useCallback(async (eventClickInfo) => {
   headerToolbar={{
     left: "prev,next today",
     center: "title",
-    right: "dayGridMonth,timeGridWeek,timeGridDay",
+    right: "timeGridDay,timeGridWeek,dayGridMonth",
   }}
-  eventContent={renderEventContent}
-displayEventTime={false}
-slotEventOverlap={false}
-eventMinHeight={28}
-slotDuration="00:30:00"
-snapDuration="00:15:00"
-eventClick={deleteCalendarEvent}  
-height="82vh"
+  buttonText={{
+    today: "Today",
+    day: "Day",
+    week: "Week",
+    month: "Month",
+  }}
+  height="82vh"
   events={fetchEvents}
+  eventClick={openEventPopup}
   nowIndicator={true}
   allDaySlot={false}
   slotMinTime="07:00:00"
   slotMaxTime="23:00:00"
   expandRows={true}
-  eventMinHeight={34}
-  eventShortHeight={34}
+  eventContent={renderEventContent}
+  displayEventTime={false}
   slotEventOverlap={false}
-  displayEventEnd={true}
-  eventDisplay="block"
-  eventTimeFormat={{
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }}
+  eventMinHeight={34}
+  slotDuration="00:30:00"
+  snapDuration="00:15:00"
 />
             </div>
           </section>
@@ -506,6 +584,75 @@ height="82vh"
           </section>
         </main>
       </div>
+      
+      {selectedEvent && (
+  <div className="event-modal-backdrop" onClick={closeEventPopup}>
+    <div
+      className="event-modal"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="event-modal-header">
+        <div className="event-modal-icon">{selectedEvent.emoji}</div>
+
+        <div>
+          <p className="eyebrow">Calendar event</p>
+          <h2>{selectedEvent.title}</h2>
+        </div>
+
+        <button
+          type="button"
+          className="event-modal-close"
+          onClick={closeEventPopup}
+          aria-label="Close event popup"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="event-details-panel always-visible">
+        <div className="event-detail-row">
+          <span>Title</span>
+          <strong>{selectedEvent.title}</strong>
+        </div>
+
+        <div className="event-detail-row">
+          <span>Start</span>
+          <strong>{formatEventDate(selectedEvent.start)}</strong>
+        </div>
+
+        <div className="event-detail-row">
+          <span>End</span>
+          <strong>{formatEventDate(selectedEvent.end)}</strong>
+        </div>
+
+        <div className="event-detail-row">
+          <span>Category</span>
+          <strong>
+            {selectedEvent.emoji} {selectedEvent.category}
+          </strong>
+        </div>
+      </div>
+
+      <div className="event-modal-actions bottom-actions">
+        <button
+          type="button"
+          className="event-action-button secondary"
+          onClick={editSelectedEvent}
+        >
+          Edit event
+        </button>
+
+        <button
+          type="button"
+          className="event-action-button danger"
+          onClick={deleteSelectedEvent}
+        >
+          Delete event
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
