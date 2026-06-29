@@ -25,6 +25,20 @@ function App() {
   avoid_after: "21:30",
 });
 
+const [showPreferences, setShowPreferences] = useState(false);
+
+function getPlanningStyleLabel(value) {
+  const labels = {
+    balanced: "Balanced",
+    earliest: "Earliest available",
+    morning: "Prefer morning",
+    afternoon: "Prefer afternoon",
+    evening: "Prefer evening",
+  };
+
+  return labels[value] || "Balanced";
+}
+
 function updatePreference(key, value) {
   setPreferences((currentPreferences) => ({
     ...currentPreferences,
@@ -232,117 +246,198 @@ height="82vh"
 />
             </div>
           </section>
-<section className="preferences-card">
-  <div className="preferences-header">
-    <div>
-      <p className="eyebrow">Planning preferences</p>
-      <h2>How should the assistant schedule your time?</h2>
+<section className={`preferences-card ${showPreferences ? "is-open" : ""}`}>
+  <div className="preferences-compact">
+    <div className="preferences-identity">
+      <div className="preferences-badge">✦</div>
+
+      <div className="preferences-copy">
+        <p className="eyebrow">Planning preferences</p>
+        <h2>How should the assistant schedule your time?</h2>
+        <p className="preferences-description">
+          Fine-tune how your assistant picks time slots so suggestions match
+          your routine.
+        </p>
+
+        <div className="preferences-summary">
+          <span className="summary-chip">
+            <strong>Weekdays</strong>
+            {preferences.weekday_start}–{preferences.weekday_end}
+          </span>
+
+          <span className="summary-chip">
+            <strong>Weekends</strong>
+            {preferences.weekend_start}–{preferences.weekend_end}
+          </span>
+
+          <span className="summary-chip">
+            <strong>Style</strong>
+            {getPlanningStyleLabel(preferences.preferred_time_of_day)}
+          </span>
+
+          <span className="summary-chip">
+            <strong>Gap</strong>
+            {preferences.minimum_gap_minutes} min
+          </span>
+
+          <span className="summary-chip">
+            <strong>Reminder</strong>
+            {preferences.default_reminder_minutes} min
+          </span>
+        </div>
+      </div>
     </div>
+
+    <button
+      type="button"
+      className="preferences-toggle-button"
+      onClick={() => setShowPreferences((current) => !current)}
+    >
+      <span className="preferences-toggle-icon">
+        {showPreferences ? "–" : "⚙"}
+      </span>
+      <span>{showPreferences ? "Hide settings" : "Customize"}</span>
+    </button>
   </div>
 
-  <div className="preferences-grid">
-    <label className="preference-field">
-      <span>Weekday start</span>
-      <input
-        type="time"
-        value={preferences.weekday_start}
-        onChange={(event) =>
-          updatePreference("weekday_start", event.target.value)
-        }
-      />
-    </label>
+  {showPreferences && (
+    <div className="preferences-expanded">
+      <div className="preferences-section-card">
+        <div className="preferences-section-header">
+          <div>
+            <p className="preferences-section-label">Availability</p>
+            <h3>When are you usually free?</h3>
+          </div>
+          <p>
+            These time windows help the assistant find realistic slots for your
+            hobbies and personal tasks.
+          </p>
+        </div>
 
-    <label className="preference-field">
-      <span>Weekday end</span>
-      <input
-        type="time"
-        value={preferences.weekday_end}
-        onChange={(event) =>
-          updatePreference("weekday_end", event.target.value)
-        }
-      />
-    </label>
+        <div className="preferences-grid">
+          <label className="preference-field">
+            <span>Weekday start</span>
+            <input
+              type="time"
+              value={preferences.weekday_start}
+              onChange={(event) =>
+                updatePreference("weekday_start", event.target.value)
+              }
+            />
+          </label>
 
-    <label className="preference-field">
-      <span>Weekend start</span>
-      <input
-        type="time"
-        value={preferences.weekend_start}
-        onChange={(event) =>
-          updatePreference("weekend_start", event.target.value)
-        }
-      />
-    </label>
+          <label className="preference-field">
+            <span>Weekday end</span>
+            <input
+              type="time"
+              value={preferences.weekday_end}
+              onChange={(event) =>
+                updatePreference("weekday_end", event.target.value)
+              }
+            />
+          </label>
 
-    <label className="preference-field">
-      <span>Weekend end</span>
-      <input
-        type="time"
-        value={preferences.weekend_end}
-        onChange={(event) =>
-          updatePreference("weekend_end", event.target.value)
-        }
-      />
-    </label>
+          <label className="preference-field">
+            <span>Weekend start</span>
+            <input
+              type="time"
+              value={preferences.weekend_start}
+              onChange={(event) =>
+                updatePreference("weekend_start", event.target.value)
+              }
+            />
+          </label>
 
-    <label className="preference-field">
-      <span>Minimum gap</span>
-      <select
-        value={preferences.minimum_gap_minutes}
-        onChange={(event) =>
-          updatePreference("minimum_gap_minutes", Number(event.target.value))
-        }
-      >
-        <option value={0}>No gap</option>
-        <option value={10}>10 minutes</option>
-        <option value={15}>15 minutes</option>
-        <option value={30}>30 minutes</option>
-      </select>
-    </label>
+          <label className="preference-field">
+            <span>Weekend end</span>
+            <input
+              type="time"
+              value={preferences.weekend_end}
+              onChange={(event) =>
+                updatePreference("weekend_end", event.target.value)
+              }
+            />
+          </label>
+        </div>
+      </div>
 
-    <label className="preference-field">
-      <span>Default reminder</span>
-      <select
-        value={preferences.default_reminder_minutes}
-        onChange={(event) =>
-          updatePreference("default_reminder_minutes", Number(event.target.value))
-        }
-      >
-        <option value={0}>At event time</option>
-        <option value={5}>5 minutes before</option>
-        <option value={10}>10 minutes before</option>
-        <option value={30}>30 minutes before</option>
-        <option value={60}>1 hour before</option>
-      </select>
-    </label>
+      <div className="preferences-section-card">
+        <div className="preferences-section-header">
+          <div>
+            <p className="preferences-section-label">Scheduling behaviour</p>
+            <h3>How should planning feel?</h3>
+          </div>
+          <p>
+            Control gaps, reminders and the preferred time of day for AI-created
+            plans.
+          </p>
+        </div>
 
-    <label className="preference-field">
-      <span>Planning style</span>
-      <select
-        value={preferences.preferred_time_of_day}
-        onChange={(event) =>
-          updatePreference("preferred_time_of_day", event.target.value)
-        }
-      >
-        <option value="balanced">Balanced</option>
-        <option value="earliest">Earliest available</option>
-        <option value="morning">Prefer morning</option>
-        <option value="afternoon">Prefer afternoon</option>
-        <option value="evening">Prefer evening</option>
-      </select>
-    </label>
+        <div className="preferences-grid">
+          <label className="preference-field">
+            <span>Minimum gap</span>
+            <select
+              value={preferences.minimum_gap_minutes}
+              onChange={(event) =>
+                updatePreference("minimum_gap_minutes", Number(event.target.value))
+              }
+            >
+              <option value={0}>No gap</option>
+              <option value={10}>10 minutes</option>
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+            </select>
+          </label>
 
-    <label className="preference-field">
-      <span>Avoid after</span>
-      <input
-        type="time"
-        value={preferences.avoid_after}
-        onChange={(event) =>
-          updatePreference("avoid_after", event.target.value)
-        }
-      />
-    </label>
-  </div>
+          <label className="preference-field">
+            <span>Default reminder</span>
+            <select
+              value={preferences.default_reminder_minutes}
+              onChange={(event) =>
+                updatePreference(
+                  "default_reminder_minutes",
+                  Number(event.target.value)
+                )
+              }
+            >
+              <option value={0}>At event time</option>
+              <option value={5}>5 minutes before</option>
+              <option value={10}>10 minutes before</option>
+              <option value={30}>30 minutes before</option>
+              <option value={60}>1 hour before</option>
+            </select>
+          </label>
+
+          <label className="preference-field">
+            <span>Planning style</span>
+            <select
+              value={preferences.preferred_time_of_day}
+              onChange={(event) =>
+                updatePreference("preferred_time_of_day", event.target.value)
+              }
+            >
+              <option value="balanced">Balanced</option>
+              <option value="earliest">Earliest available</option>
+              <option value="morning">Prefer morning</option>
+              <option value="afternoon">Prefer afternoon</option>
+              <option value="evening">Prefer evening</option>
+            </select>
+          </label>
+
+          <label className="preference-field">
+            <span>Avoid after</span>
+            <input
+              type="time"
+              value={preferences.avoid_after}
+              onChange={(event) =>
+                updatePreference("avoid_after", event.target.value)
+              }
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  )}
 </section>
           <section className="assistant-card">
             <div className="assistant-icon">✨</div>
