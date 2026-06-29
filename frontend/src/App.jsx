@@ -24,6 +24,7 @@ function App() {
   preferred_time_of_day: "balanced",
   avoid_after: "21:30",
 });
+const [createdPlanEvents, setCreatedPlanEvents] = useState([]);
 
 const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -75,6 +76,7 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
 }, []);
 
   async function sendMessageToAssistant(customMessage) {
+    
     const textToSend = customMessage || message;
 
     if (!textToSend.trim()) return;
@@ -82,6 +84,7 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
     setLoading(true);
     setAssistantReply("");
     setStatusType("");
+    setCreatedPlanEvents([]);
 
     try {
       const response = await fetch(`${API_BASE_URL}/assistant`, {
@@ -102,6 +105,7 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
       }
 
       setAssistantReply(data.message || "Done.");
+      setCreatedPlanEvents(data.created_events || []);
       setStatusType("success");
       setMessage("");
 
@@ -110,6 +114,7 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
       }
     } catch (error) {
       console.error(error);
+      setCreatedPlanEvents([]);
       setAssistantReply(error.message || "Something went wrong.");
       setStatusType("error");
     } finally {
@@ -246,6 +251,7 @@ async function deleteSelectedEvent() {
 
     setAssistantReply(`Deleted: ${selectedEvent.title}`);
     setStatusType("success");
+    setCreatedPlanEvents([]);
 
     closeEventPopup();
 
@@ -259,6 +265,52 @@ async function deleteSelectedEvent() {
     );
     setStatusType("error");
   }
+}
+function formatPlanEventDate(dateValue) {
+  if (!dateValue) return "No date";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
+function getCategoryLabel(category) {
+  const labels = {
+    hobby: "Hobby",
+    errand: "Errand",
+    exercise: "Exercise",
+    work: "Work",
+    chore: "Chore",
+    health: "Health",
+    study: "Study",
+    relationship: "Relationship",
+    personal: "Personal",
+  };
+
+  return labels[category] || "Personal";
+}
+
+function groupCreatedEvents(events) {
+  return events.reduce((groups, event) => {
+    const key = event.title || "Scheduled event";
+
+    if (!groups[key]) {
+      groups[key] = {
+        title: event.title || "Scheduled event",
+        category: event.category || "personal",
+        emoji: event.emoji || "✨",
+        events: [],
+      };
+    }
+
+    groups[key].events.push(event);
+
+    return groups;
+  }, {});
 }
 
 
@@ -580,6 +632,42 @@ async function deleteSelectedEvent() {
                   <p>{assistantReply}</p>
                 </div>
               )}
+              {createdPlanEvents.length > 0 && (
+  <div className="plan-summary-card">
+    <div className="plan-summary-header">
+      <div>
+        <p className="eyebrow">Created plan</p>
+        <h3>{createdPlanEvents.length} event(s) added to your calendar</h3>
+      </div>
+    </div>
+
+    <div className="plan-summary-groups">
+      {Object.values(groupCreatedEvents(createdPlanEvents)).map((group) => (
+        <div className="plan-summary-group" key={group.title}>
+          <div className="plan-summary-group-header">
+            <div className="plan-summary-icon">{group.emoji}</div>
+
+            <div>
+              <h4>{group.title}</h4>
+              <p>
+                {getCategoryLabel(group.category)} · {group.events.length} session
+                {group.events.length === 1 ? "" : "s"}
+              </p>
+            </div>
+          </div>
+
+          <div className="plan-summary-list">
+            {group.events.map((event) => (
+              <div className="plan-summary-item" key={event.id}>
+                <span>{formatPlanEventDate(event.start)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
             </div>
           </section>
         </main>

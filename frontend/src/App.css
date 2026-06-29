@@ -1247,3 +1247,117 @@ textarea:disabled {
     text-align: left;
   }
 }
+
+
+/* =========================
+   Created Plan Summary
+   ========================= */
+
+.plan-summary-card {
+  margin-top: 18px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(220, 226, 243, 0.9);
+  border-radius: 28px;
+  box-shadow: 0 18px 60px rgba(31, 24, 61, 0.06);
+}
+
+.plan-summary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.plan-summary-header h3 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.plan-summary-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.plan-summary-group {
+  padding: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(249, 249, 255, 0.95),
+    rgba(240, 243, 255, 0.85)
+  );
+  border: 1px solid rgba(216, 210, 228, 0.75);
+  border-radius: 22px;
+}
+
+.plan-summary-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.plan-summary-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  font-size: 22px;
+  background: rgba(99, 14, 212, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(99, 14, 212, 0.08);
+}
+
+.plan-summary-group h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.plan-summary-group p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plan-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-summary-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(99, 14, 212, 0.065);
+  border: 1px solid rgba(99, 14, 212, 0.08);
+  border-radius: 999px;
+}
+
+@media (max-width: 560px) {
+  .plan-summary-card {
+    padding: 14px;
+  }
+
+  .plan-summary-group {
+    padding: 14px;
+  }
+
+  .plan-summary-list {
+    display: grid;
+  }
+
+  .plan-summary-item {
+    justify-content: center;
+  }
+}
