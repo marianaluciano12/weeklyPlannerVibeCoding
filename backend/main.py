@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from turtle import title
 from zoneinfo import ZoneInfo
 
 from dateutil.parser import isoparse
@@ -56,8 +57,16 @@ def delete_event(event_id: str):
 @app.post("/assistant")
 def assistant(request: AssistantRequest):
     action = parse_user_message(request.message)
-
+    preferences = request.preferences
     action_type = action.get("action")
+
+    if request.preferences:
+      if hasattr(request.preferences, "model_dump"):
+        preferences = request.preferences.model_dump()
+      else:
+        preferences = request.preferences.dict()
+
+
 
     if action_type == "unknown":
         return {
@@ -77,13 +86,18 @@ def assistant(request: AssistantRequest):
 
         end_datetime = start_datetime + timedelta(minutes=duration_minutes)
 
+        reminder_minutes = 10
+
+        if preferences:
+          reminder_minutes = preferences.get("default_reminder_minutes", 10)
+
         created_event = create_calendar_event(
-            title=title,
-            start_datetime=start_datetime.isoformat(),
-            end_datetime=end_datetime.isoformat(),
-            description="Created by AI Calendar Assistant",
-            reminder_minutes_before=10
-        )
+          title=title,
+          start_datetime=start_datetime.isoformat(),
+          end_datetime=end_datetime.isoformat(),
+          description="Created by AI Calendar Assistant",
+          reminder_minutes_before=reminder_minutes
+)
 
         return {
             "status": "success",
@@ -106,21 +120,27 @@ def assistant(request: AssistantRequest):
         )
 
         slots = find_daily_slots(
-            busy_periods=busy_periods,
-            duration_minutes=duration_minutes,
-            days=days
+          busy_periods=busy_periods,
+          duration_minutes=duration_minutes,
+          days=days,
+          preferences=preferences
         )
 
         created_events = []
 
         for slot in slots:
+            reminder_minutes = 10
+
+            if preferences:
+              reminder_minutes = preferences.get("default_reminder_minutes", 10)
+
             created_event = create_calendar_event(
-                title=title,
-                start_datetime=slot["start"],
-                end_datetime=slot["end"],
-                description="Scheduled by AI Calendar Assistant",
-                reminder_minutes_before=10
-            )
+              title=title,
+              start_datetime=slot["start"],
+              end_datetime=slot["end"],
+              description="Scheduled by AI Calendar Assistant",
+              reminder_minutes_before=reminder_minutes
+            )   
 
             created_events.append(created_event)
 

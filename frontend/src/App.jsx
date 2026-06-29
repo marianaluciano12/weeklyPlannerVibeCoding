@@ -14,6 +14,23 @@ const SUGGESTIONS = [
 ];
 
 function App() {
+  const [preferences, setPreferences] = useState({
+  weekday_start: "17:00",
+  weekday_end: "22:30",
+  weekend_start: "10:00",
+  weekend_end: "22:00",
+  minimum_gap_minutes: 15,
+  default_reminder_minutes: 10,
+  preferred_time_of_day: "balanced",
+  avoid_after: "21:30",
+});
+
+function updatePreference(key, value) {
+  setPreferences((currentPreferences) => ({
+    ...currentPreferences,
+    [key]: value,
+  }));
+}
   const calendarRef = useRef(null);
 
   const [message, setMessage] = useState("");
@@ -58,6 +75,7 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
         },
         body: JSON.stringify({
           message: textToSend,
+          preferences
         }),
       });
 
@@ -150,6 +168,7 @@ const deleteCalendarEvent = useCallback(async (eventClickInfo) => {
         <header className="app-header">
           <div className="brand">
             <div className="brand-mark">✦</div>
+            
             <div>
               <h1>Calendar Planner</h1>
               <p>Your AI assistant for reminders, routines and focus time.</p>
@@ -213,7 +232,118 @@ height="82vh"
 />
             </div>
           </section>
+<section className="preferences-card">
+  <div className="preferences-header">
+    <div>
+      <p className="eyebrow">Planning preferences</p>
+      <h2>How should the assistant schedule your time?</h2>
+    </div>
+  </div>
 
+  <div className="preferences-grid">
+    <label className="preference-field">
+      <span>Weekday start</span>
+      <input
+        type="time"
+        value={preferences.weekday_start}
+        onChange={(event) =>
+          updatePreference("weekday_start", event.target.value)
+        }
+      />
+    </label>
+
+    <label className="preference-field">
+      <span>Weekday end</span>
+      <input
+        type="time"
+        value={preferences.weekday_end}
+        onChange={(event) =>
+          updatePreference("weekday_end", event.target.value)
+        }
+      />
+    </label>
+
+    <label className="preference-field">
+      <span>Weekend start</span>
+      <input
+        type="time"
+        value={preferences.weekend_start}
+        onChange={(event) =>
+          updatePreference("weekend_start", event.target.value)
+        }
+      />
+    </label>
+
+    <label className="preference-field">
+      <span>Weekend end</span>
+      <input
+        type="time"
+        value={preferences.weekend_end}
+        onChange={(event) =>
+          updatePreference("weekend_end", event.target.value)
+        }
+      />
+    </label>
+
+    <label className="preference-field">
+      <span>Minimum gap</span>
+      <select
+        value={preferences.minimum_gap_minutes}
+        onChange={(event) =>
+          updatePreference("minimum_gap_minutes", Number(event.target.value))
+        }
+      >
+        <option value={0}>No gap</option>
+        <option value={10}>10 minutes</option>
+        <option value={15}>15 minutes</option>
+        <option value={30}>30 minutes</option>
+      </select>
+    </label>
+
+    <label className="preference-field">
+      <span>Default reminder</span>
+      <select
+        value={preferences.default_reminder_minutes}
+        onChange={(event) =>
+          updatePreference("default_reminder_minutes", Number(event.target.value))
+        }
+      >
+        <option value={0}>At event time</option>
+        <option value={5}>5 minutes before</option>
+        <option value={10}>10 minutes before</option>
+        <option value={30}>30 minutes before</option>
+        <option value={60}>1 hour before</option>
+      </select>
+    </label>
+
+    <label className="preference-field">
+      <span>Planning style</span>
+      <select
+        value={preferences.preferred_time_of_day}
+        onChange={(event) =>
+          updatePreference("preferred_time_of_day", event.target.value)
+        }
+      >
+        <option value="balanced">Balanced</option>
+        <option value="earliest">Earliest available</option>
+        <option value="morning">Prefer morning</option>
+        <option value="afternoon">Prefer afternoon</option>
+        <option value="evening">Prefer evening</option>
+      </select>
+    </label>
+
+    <label className="preference-field">
+      <span>Avoid after</span>
+      <input
+        type="time"
+        value={preferences.avoid_after}
+        onChange={(event) =>
+          updatePreference("avoid_after", event.target.value)
+        }
+      />
+    </label>
+  </div>
+</section>
           <section className="assistant-card">
             <div className="assistant-icon">✨</div>
 
