@@ -123,8 +123,15 @@ const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallba
   }
 
 const renderEventContent = useCallback((eventInfo) => {
+  const category = eventInfo.event.extendedProps.category || "personal";
+  const originalTitle =
+    eventInfo.event.extendedProps.originalTitle || eventInfo.event.title;
+
   return (
-    <div className="custom-event-content" title={eventInfo.event.title}>
+    <div
+      className={`custom-event-content event-category-${category}`}
+      title={originalTitle}
+    >
       <span className="custom-event-title">{eventInfo.event.title}</span>
     </div>
   );

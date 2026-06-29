@@ -294,20 +294,46 @@ textarea:disabled {
 }
 
 .fc .fc-event {
-  padding: 4px 7px;
-  border-radius: 12px;
-  border-left-width: 4px;
-  box-shadow: 0 10px 28px rgba(31, 24, 61, 0.08);
+  padding: 0;
+  border-radius: 14px;
+  border-left-width: 5px;
   overflow: hidden;
+  box-shadow: 0 10px 24px rgba(31, 24, 61, 0.1);
+  cursor: pointer;
 }
 
 .fc .fc-event-main {
+  height: 100%;
   overflow: hidden;
 }
 
+.custom-event-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  overflow: hidden;
+}
 
-.fc .fc-event {
-  cursor: pointer;
+.custom-event-title {
+  display: block;
+  width: 100%;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fc .fc-timegrid-event {
+  min-height: 34px;
+}
+
+.fc .fc-timegrid-event-short {
+  min-height: 34px;
 }
 
 .fc .fc-event:hover {
@@ -316,100 +342,6 @@ textarea:disabled {
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-.fc .fc-event-title-container {
-  min-height: 0;
-}
-
-
-/* FullCalendar applies this class to very short events */
-.fc .fc-event {
-  padding: 0;
-  border-radius: 10px;
-  border-left-width: 4px;
-  overflow: hidden;
-  box-shadow: 0 8px 20px rgba(31, 24, 61, 0.08);
-}
-
-.fc .fc-event-main {
-  height: 100%;
-  overflow: hidden;
-}
-
-.custom-event-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  min-height: 24px;
-  padding: 3px 7px;
-  overflow: hidden;
-}
-
-.custom-event-title {
-  display: block;
-  width: 100%;
-  color: inherit;
-  font-size: 12px;
-  line-height: 1.15;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Make very short events easier to read */
-.fc .fc-timegrid-event {
-  min-height: 26px;
-}
-
-.fc .fc-timegrid-event-short {
-  min-height: 26px;
-}
-
-/* Give the week view more vertical breathing room */
-.fc .fc-timegrid-slot {
-  height: 38px;
-}.fc .fc-event {
-  padding: 0;
-  border-radius: 10px;
-  border-left-width: 4px;
-  overflow: hidden;
-  box-shadow: 0 8px 20px rgba(31, 24, 61, 0.08);
-}
-
-.fc .fc-event-main {
-  height: 100%;
-  overflow: hidden;
-}
-
-.custom-event-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  min-height: 24px;
-  padding: 3px 7px;
-  overflow: hidden;
-}
-
-.custom-event-title {
-  display: block;
-  width: 100%;
-  color: inherit;
-  font-size: 12px;
-  line-height: 1.15;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Make very short events easier to read */
-.fc .fc-timegrid-event {
-  min-height: 26px;
-}
-
-.fc .fc-timegrid-event-short {
-  min-height: 26px;
-}
 
 /* Give the week view more vertical breathing room */
 .fc .fc-timegrid-slot {

@@ -5,14 +5,16 @@ from zoneinfo import ZoneInfo
 from dateutil.parser import isoparse
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from httpcore import request
 
 from models import AssistantRequest
 from llm_service import parse_user_message
 from calendar_service import (
-    list_calendar_events,
-    create_calendar_event,
-    get_free_busy,
-    delete_calendar_event
+     list_calendar_events,
+      list_calendar_events_for_context,
+      create_calendar_event,
+      get_free_busy,
+      delete_calendar_event
 )
 from scheduler import find_daily_slots
 
@@ -56,9 +58,21 @@ def delete_event(event_id: str):
 
 @app.post("/assistant")
 def assistant(request: AssistantRequest):
-    action = parse_user_message(request.message)
+    now = datetime.now(TZ)
+    context_end = now + timedelta(days=14)
+
+    calendar_context = list_calendar_events_for_context(
+      now.isoformat(),
+      context_end.isoformat()
+    )
+
+    action = parse_user_message(
+      request.message,
+      calendar_context=calendar_context
+    )
     preferences = request.preferences
     action_type = action.get("action")
+    category = action.get("category") or "personal"
 
     if request.preferences:
       if hasattr(request.preferences, "model_dump"):
@@ -95,8 +109,9 @@ def assistant(request: AssistantRequest):
           title=title,
           start_datetime=start_datetime.isoformat(),
           end_datetime=end_datetime.isoformat(),
-          description="Created by AI Calendar Assistant",
-          reminder_minutes_before=reminder_minutes
+          description=f"Created by AI Calendar Assistant. Category: {category}",
+          reminder_minutes_before=reminder_minutes,
+          category=category
 )
 
         return {
@@ -138,9 +153,10 @@ def assistant(request: AssistantRequest):
               title=title,
               start_datetime=slot["start"],
               end_datetime=slot["end"],
-              description="Scheduled by AI Calendar Assistant",
-              reminder_minutes_before=reminder_minutes
-            )   
+              description=f"Scheduled by AI Calendar Assistant. Category: {category}",
+              reminder_minutes_before=reminder_minutes,
+              category=category
+)  
 
             created_events.append(created_event)
 
