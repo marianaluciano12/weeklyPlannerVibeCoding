@@ -10,7 +10,8 @@ from llm_service import parse_user_message
 from calendar_service import (
     list_calendar_events,
     create_calendar_event,
-    get_free_busy
+    get_free_busy,
+    delete_calendar_event
 )
 from scheduler import find_daily_slots
 
@@ -41,6 +42,16 @@ def root():
 def get_events(start: str, end: str):
     return list_calendar_events(start, end)
 
+
+@app.delete("/events/{event_id}")
+def delete_event(event_id: str):
+    deleted_event = delete_calendar_event(event_id)
+
+    return {
+        "status": "success",
+        "message": "Event deleted successfully.",
+        "deleted_event": deleted_event
+    }
 
 @app.post("/assistant")
 def assistant(request: AssistantRequest):

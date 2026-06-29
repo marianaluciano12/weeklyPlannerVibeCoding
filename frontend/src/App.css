@@ -306,6 +306,15 @@ textarea:disabled {
 }
 
 
+.fc .fc-event {
+  cursor: pointer;
+}
+
+.fc .fc-event:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
 
 .fc .fc-event-title-container {
   min-height: 0;

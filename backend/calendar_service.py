@@ -132,3 +132,18 @@ def create_calendar_event(
         "end": created_event.get("end", {}).get("dateTime"),
         "htmlLink": created_event.get("htmlLink"),
     }
+
+
+
+def delete_calendar_event(event_id: str):
+    service = get_calendar_service()
+
+    service.events().delete(
+        calendarId=CALENDAR_ID,
+        eventId=event_id
+    ).execute()
+
+    return {
+        "id": event_id,
+        "deleted": True
+    }

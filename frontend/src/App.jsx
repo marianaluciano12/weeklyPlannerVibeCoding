@@ -98,6 +98,49 @@ function App() {
   );
 }
 
+
+async function deleteCalendarEvent(eventClickInfo) {
+  const eventTitle = eventClickInfo.event.title;
+  const eventId = eventClickInfo.event.id;
+
+  const shouldDelete = window.confirm(
+    `Delete "${eventTitle}" from your Google Calendar?`
+  );
+
+  if (!shouldDelete) return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/events/${encodeURIComponent(eventId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.status === "error") {
+      throw new Error(data.message || "Could not delete event.");
+    }
+
+    eventClickInfo.event.remove();
+
+    setAssistantReply(`Deleted: ${eventTitle}`);
+    setStatusType("success");
+
+    if (calendarRef.current) {
+      calendarRef.current.getApi().refetchEvents();
+    }
+  } catch (error) {
+    console.error(error);
+    setAssistantReply(error.message || "Something went wrong while deleting the event.");
+    setStatusType("error");
+  }
+}
+
+
+
+
   return (
     <div className="app-shell">
       <div className="background-glow background-glow-primary" />
@@ -149,7 +192,8 @@ slotEventOverlap={false}
 eventMinHeight={28}
 slotDuration="00:30:00"
 snapDuration="00:15:00"
-  height="82vh"
+eventClick={deleteCalendarEvent}  
+height="82vh"
   events={fetchEvents}
   nowIndicator={true}
   allDaySlot={false}
