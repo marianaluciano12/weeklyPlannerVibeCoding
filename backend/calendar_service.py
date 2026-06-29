@@ -99,28 +99,28 @@ def normalize_category(category: str | None) -> str:
 def infer_category_from_title(title: str) -> str:
     title_lower = title.lower()
 
-    if any(word in title_lower for word in ["piano", "music", "reading", "read", "game", "draw"]):
+    if any(word in title_lower for word in ["piano", "música", "musica", "leitura", "ler", "jogar", "desenhar"]):
         return "hobby"
 
-    if any(word in title_lower for word in ["buy", "milk", "groceries", "grocery", "shopping", "pharmacy"]):
+    if any(word in title_lower for word in ["comprar", "leite", "ovos", "supermercado", "compras", "farmácia", "farmacia"]):
         return "errand"
 
-    if any(word in title_lower for word in ["gym", "workout", "run", "walk", "yoga"]):
+    if any(word in title_lower for word in ["ginásio", "ginasio", "treino", "correr", "corrida", "caminhada", "yoga"]):
         return "exercise"
 
-    if any(word in title_lower for word in ["meeting", "call", "work", "code", "course", "class"]):
+    if any(word in title_lower for word in ["reunião", "reuniao", "chamada", "trabalho", "código", "codigo", "curso", "aula"]):
         return "work"
 
-    if any(word in title_lower for word in ["clean", "laundry", "dishes", "house"]):
+    if any(word in title_lower for word in ["limpar", "limpeza", "roupa", "lavandaria", "loiça", "loica", "casa"]):
         return "chore"
 
-    if any(word in title_lower for word in ["doctor", "dentist", "dentista", "health", "medicine"]):
+    if any(word in title_lower for word in ["médico", "medico", "dentista", "consulta", "saúde", "saude", "medicamento"]):
         return "health"
 
-    if any(word in title_lower for word in ["study", "exam", "assignment", "learn"]):
+    if any(word in title_lower for word in ["estudar", "estudo", "exame", "trabalho de casa", "aprender"]):
         return "study"
 
-    if any(word in title_lower for word in ["date", "romantic", "relationship"]):
+    if any(word in title_lower for word in ["encontro", "date", "romântico", "romantico", "casal", "relação", "relacao"]):
         return "relationship"
 
     return "personal"

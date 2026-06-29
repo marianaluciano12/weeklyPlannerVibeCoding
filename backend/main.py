@@ -52,7 +52,7 @@ def delete_event(event_id: str):
 
     return {
         "status": "success",
-        "message": "Event deleted successfully.",
+        "message": "Evento eliminado com sucesso.",
         "deleted_event": deleted_event
     }
 
@@ -85,7 +85,7 @@ def assistant(request: AssistantRequest):
     if action_type == "unknown":
         return {
             "status": "error",
-            "message": "I could not understand that request.",
+            "message": "Não consegui perceber esse pedido.",
             "action": action
         }
 
@@ -116,7 +116,7 @@ def assistant(request: AssistantRequest):
 
         return {
             "status": "success",
-            "message": f"Created reminder: {title}",
+            "message": f"Lembrete criado: {title}",
             "created_events": [created_event],
             "action": action
         }
@@ -203,12 +203,12 @@ def assistant(request: AssistantRequest):
                 })
 
             task_summaries.append(
-                f"{title}: {len(task_created_events)}/{sessions_count} scheduled"
+                f"{title}: {len(task_created_events)}/{sessions_count} agendadas"
             )
 
         return {
             "status": "success",
-            "message": "Weekly plan created. " + " · ".join(task_summaries),
+            "message": "Plano semanal criado. " + " · ".join(task_summaries),
             "created_events": created_events,
             "action": action
         }

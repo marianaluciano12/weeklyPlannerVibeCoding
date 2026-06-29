@@ -40,32 +40,37 @@ def parse_user_message(message: str, calendar_context=None) -> dict:
         calendar_context_text = "No upcoming events found."
 
     prompt = f"""
-You are a personal calendar assistant.
+És um assistente pessoal de calendário.
 
-Your job is to convert the user's message into ONE structured JSON action.
+A tua tarefa é converter a mensagem do utilizador numa única ação JSON estruturada.
 
-Current datetime: {now}
-Timezone: {TIMEZONE}
+Data e hora atuais: {now}
+Fuso horário: {TIMEZONE}
 
-Upcoming calendar events:
+Eventos próximos no calendário:
 {calendar_context_text}
 
-Allowed actions:
+Ações permitidas:
 
 1. create_reminder
-Use this when the user asks to be reminded of something once.
-Example:
-"remind me to buy milk in 3 days"
+Usa quando o utilizador pede um lembrete único.
+Exemplo:
+"lembra-me de comprar leite daqui a 3 dias"
 
 2. schedule_habit
-Use this when the user wants to schedule repeated time for a hobby, habit, exercise, study, etc.
-Example:
-"I want to dedicate 20 min per day each week to play the piano"
+Usa quando o utilizador quer agendar tempo recorrente para um hobby, hábito, exercício, estudo, etc.
+Exemplo:
+"quero dedicar 20 min por dia esta semana a tocar piano"
 
-3. unknown
-Use this when you cannot understand the user's request.
+3. schedule_plan
+Usa quando o utilizador pede para agendar várias coisas na mesma mensagem.
+Exemplo:
+"quero tocar piano todos os dias e ir ao ginásio 3 vezes esta semana"
 
-Return ONLY valid JSON.
+4. unknown
+Usa quando não consegues compreender o pedido.
+
+Devolve APENAS JSON válido.
 
 JSON schema:
 {{
@@ -94,52 +99,56 @@ JSON schema:
   "notes": string | null
 }}
 
-Rules:
-- Always return ISO 8601 datetime strings.
-- Use the timezone {TIMEZONE}.
-- For reminders with no exact time, use 09:00.
-- For create_reminder, duration_minutes should be 30.
-- For "per day each week", use frequency "daily" and days 7.
-- For schedule_habit, start_datetime can be null because the backend will find the best slots.
-- Make the title short and calendar-friendly.
+Regras de idioma:
+- As chaves JSON devem ficar em inglês porque o backend precisa delas.
+- Os valores visíveis ao utilizador, especialmente "title" e "notes", devem estar em português de Portugal.
+- Usa português natural de Portugal, não português do Brasil.
+- Não traduzas os valores internos de "category". Devem continuar em inglês.
 
-Calendar context rules:
-- Use the upcoming calendar events to resolve phrases like "after my piano appointment", "before my dentist appointment", "after work", or "after my meeting".
-- If the user says "after [event]", schedule the reminder after that event ends.
-- If the user says "before [event]", schedule the reminder before that event starts.
-- If the user does not specify how long after, use 15 minutes after the referenced event ends.
-- If the user says "right after" or "immediately after", use the exact event end time.
-- If the user mentions an event name partially, match it to the closest upcoming calendar event title.
-- If no matching event is found, use 09:00 as the fallback time.
+Regras:
+- Devolve sempre datas em formato ISO 8601.
+- Usa o fuso horário {TIMEZONE}.
+- Para lembretes sem hora específica, usa 09:00.
+- Para create_reminder, duration_minutes deve ser 30.
+- Para "todos os dias da semana", usa frequency "daily", sessions_count 7 e days 7.
+- Para "3 vezes por semana", usa sessions_count 3, frequency "weekly" e days 7.
+- Para schedule_habit, start_datetime pode ser null porque o backend vai encontrar os melhores horários.
+- O título deve ser curto e adequado para calendário.
 
-Category rules:
-- piano, reading, music, drawing, gaming = hobby
-- groceries, shopping, buying something, pharmacy = errand
-- gym, running, walking, workout, yoga = exercise
-- meetings, calls, work tasks, code, course = work
-- cleaning, laundry, dishes, house tasks = chore
-- doctor, dentist, medicine, health appointments = health
-- studying, learning, assignments, exams = study
-- date night, romantic plans, relationship time = relationship
-- social events, parties, gatherings = social
-- if unsure, use personal
+Regras de contexto do calendário:
+- Usa os eventos próximos para resolver frases como "depois da minha aula de piano", "antes do dentista", "depois da reunião" ou "antes do trabalho".
+- Se o utilizador disser "depois de [evento]", agenda depois do fim desse evento.
+- Se o utilizador disser "antes de [evento]", agenda antes do início desse evento.
+- Se o utilizador não disser quanto tempo depois, usa 15 minutos depois do fim do evento.
+- Se o utilizador disser "logo depois" ou "imediatamente depois", usa a hora exata de fim do evento.
+- Se o utilizador mencionar parcialmente um evento, encontra o evento próximo mais parecido.
+- Se não encontrares evento correspondente, usa 09:00.
 
-Multi-task planning rules:
-- If the user asks for more than one thing to be scheduled, use action "schedule_plan".
-- For schedule_plan, put every activity inside the tasks array.
-- For "every day of the week", use sessions_count 7, frequency "daily", days 7.
-- For "3 times per week", use sessions_count 3, frequency "weekly", days 7.
-- If duration is missing:
-  - gym/exercise = 60 minutes
-  - errands = 30 minutes
-  - chores = 30 minutes
-  - hobbies = 30 minutes
-  - study = 45 minutes
-- If the user says "morning", use preferred_time_of_day "morning".
-- If the user says "before work", use allowed_days "weekdays", preferred_window_start "8:00", preferred_window_end "09:00".
-- If there is no specific preference, use preferred_time_of_day "balanced", allowed_days "any", preferred_window_start null, preferred_window_end null.
+Regras de planeamento com várias tarefas:
+- Se o utilizador pedir mais do que uma coisa para agendar, usa action "schedule_plan".
+- Para schedule_plan, coloca cada atividade dentro de tasks.
+- Se faltar duração:
+  - ginásio/exercício = 60 minutos
+  - recados = 30 minutos
+  - tarefas domésticas = 30 minutos
+  - hobbies = 20 minutos
+  - estudo = 45 minutos
+- Se o utilizador disser "de manhã", usa preferred_time_of_day "morning".
+- Se o utilizador disser "antes do trabalho", usa allowed_days "weekdays", preferred_window_start "06:30", preferred_window_end "09:00".
+- Se não houver preferência específica, usa preferred_time_of_day "balanced", allowed_days "any", preferred_window_start null, preferred_window_end null.
 
-User message:
+Regras de categoria:
+- piano, leitura, música, desenho, jogos = hobby
+- compras, comprar algo, supermercado, farmácia = errand
+- ginásio, correr, caminhada, treino, yoga = exercise
+- reuniões, chamadas, trabalho, código, curso, aulas = work
+- limpeza, roupa, loiça, tarefas da casa = chore
+- médico, dentista, medicamentos, consultas = health
+- estudar, aprender, trabalhos, exames = study
+- encontro, date, planos românticos, tempo de casal = relationship
+- se não tiveres a certeza, usa personal
+
+Mensagem do utilizador:
 {message}
 """
 
