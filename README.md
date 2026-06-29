@@ -1,7 +1,9 @@
 # AI Calendar Assistant
 
 A web app that displays a Google Calendar and includes an AI assistant textbox.  
-The assistant can understand natural language requests such as:
+The assistant can understand natural language requests and the calendar also allows deleting events by clicking them.
+
+Example assistant requests:
 
 - "Remind me to buy milk in 3 days"
 - "I want to dedicate 20 min per day each week to play the piano"
@@ -20,13 +22,14 @@ The app uses:
 
 The current MVP can:
 
-1. Display Google Calendar events in a weekly/monthly calendar view.
+1. Display Google Calendar events in day/week/month calendar views.
 2. Send natural language commands to an AI assistant.
 3. Convert user messages into structured actions.
 4. Create reminders in Google Calendar.
 5. Find free time slots in Google Calendar.
 6. Schedule recurring daily hobby/habit sessions.
-7. Refresh the calendar after events are created.
+7. Delete events from Google Calendar by clicking on them.
+8. Refresh the calendar after events are created or deleted.
 
 ---
 
@@ -438,6 +441,13 @@ The app should:
 2. Find available time slots.
 3. Create one piano event per day for the next 7 days.
 
+To test event deletion:
+
+1. Click an event in the calendar.
+2. Confirm the deletion popup.
+3. The event should be deleted from Google Calendar.
+4. The calendar should refresh automatically.
+
 ---
 
 ## 13. API Endpoints
@@ -467,6 +477,23 @@ Example:
 ```txt
 GET /events?start=2026-06-29T00:00:00%2B01:00&end=2026-07-06T00:00:00%2B01:00
 ```
+
+
+### Delete calendar event
+
+```txt
+DELETE /events/{event_id}
+```
+
+Example:
+
+```txt
+DELETE /events/abc123googlecalendarid
+```
+
+This endpoint deletes the selected event from Google Calendar.
+
+The frontend calls this endpoint when the user clicks a calendar event and confirms the deletion popup.
 
 ### Send message to assistant
 
@@ -514,6 +541,18 @@ Backend receives structured JSON action
 Python validates the action
   ↓
 Google Calendar API creates the event
+
+For event deletion:
+
+User clicks an event
+  ↓
+Frontend asks for confirmation
+  ↓
+Frontend calls DELETE /events/{event_id}
+  ↓
+Backend deletes the event through Google Calendar API
+  ↓
+Calendar refreshes
 ```
 
 Example:
@@ -667,6 +706,39 @@ Check:
 
 ---
 
+
+### Event deletion does not work
+
+Check:
+
+1. The backend includes this endpoint:
+
+```python
+@app.delete("/events/{event_id}")
+```
+
+2. `calendar_service.py` includes a function that calls:
+
+```python
+service.events().delete(...)
+```
+
+3. The frontend `FullCalendar` component includes:
+
+```jsx
+eventClick={deleteCalendarEvent}
+```
+
+4. The Google Calendar scope is:
+
+```txt
+https://www.googleapis.com/auth/calendar
+```
+
+If you previously authenticated with a more limited scope, delete `backend/token.json` and run `python auth_test.py` again.
+
+---
+
 ## 16. Notes for Evaluation
 
 This project demonstrates:
@@ -679,6 +751,7 @@ This project demonstrates:
 - React frontend development
 - Calendar scheduling logic
 - Full-stack communication between frontend and backend
+- Basic calendar CRUD operations: read, create, and delete events
 
 The main architectural decision is:
 
