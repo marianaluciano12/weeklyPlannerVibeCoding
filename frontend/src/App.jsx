@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -21,25 +21,25 @@ function App() {
   const [statusType, setStatusType] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function fetchEvents(fetchInfo, successCallback, failureCallback) {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/events?start=${encodeURIComponent(
-          fetchInfo.startStr
-        )}&end=${encodeURIComponent(fetchInfo.endStr)}`
-      );
+const fetchEvents = useCallback(async (fetchInfo, successCallback, failureCallback) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/events?start=${encodeURIComponent(
+        fetchInfo.startStr
+      )}&end=${encodeURIComponent(fetchInfo.endStr)}`
+    );
 
-      if (!response.ok) {
-        throw new Error("Could not load calendar events.");
-      }
-
-      const events = await response.json();
-      successCallback(events);
-    } catch (error) {
-      console.error(error);
-      failureCallback(error);
+    if (!response.ok) {
+      throw new Error("Could not load calendar events.");
     }
+
+    const events = await response.json();
+    successCallback(events);
+  } catch (error) {
+    console.error(error);
+    failureCallback(error);
   }
+}, []);
 
   async function sendMessageToAssistant(customMessage) {
     const textToSend = customMessage || message;
@@ -90,16 +90,16 @@ function App() {
     }
   }
 
-  function renderEventContent(eventInfo) {
+const renderEventContent = useCallback((eventInfo) => {
   return (
     <div className="custom-event-content" title={eventInfo.event.title}>
       <span className="custom-event-title">{eventInfo.event.title}</span>
     </div>
   );
-}
+}, []);
 
 
-async function deleteCalendarEvent(eventClickInfo) {
+const deleteCalendarEvent = useCallback(async (eventClickInfo) => {
   const eventTitle = eventClickInfo.event.title;
   const eventId = eventClickInfo.event.id;
 
@@ -136,7 +136,7 @@ async function deleteCalendarEvent(eventClickInfo) {
     setAssistantReply(error.message || "Something went wrong while deleting the event.");
     setStatusType("error");
   }
-}
+}, []);
 
 
 
