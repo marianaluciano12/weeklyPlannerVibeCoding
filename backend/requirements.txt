@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+google-genai
+python-dateutil
+tzdata

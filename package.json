@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "dev": "concurrently -k -n backend,frontend \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && .\\venv\\Scripts\\python.exe -m uvicorn main:app --reload",
+    "frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

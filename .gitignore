@@ -1,4 +1,10 @@
-hello.txt
+.env
+token.json
+credentials.json
+__pycache__/
+venv/
+
+
 
 
 # Python Virtual Environment
