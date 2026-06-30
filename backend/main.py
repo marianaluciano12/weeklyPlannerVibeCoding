@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
 import re
-from turtle import title
+import unicodedata
 from zoneinfo import ZoneInfo
 
 from dateutil.parser import isoparse
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from httpcore import request
 
 from models import AssistantRequest
 from llm_service import parse_user_message
@@ -89,6 +88,348 @@ def parse_fixed_task_datetime(value, title, category, preferred_time_of_day=None
         fixed_datetime = fixed_datetime.replace(hour=hour, minute=minute)
 
     return fixed_datetime
+
+
+def normalize_text(value):
+    value = (value or "").lower()
+    value = unicodedata.normalize("NFD", value)
+    value = "".join(char for char in value if unicodedata.category(char) != "Mn")
+    return value
+
+
+def has_current_week_phrase(text):
+    normalized = normalize_text(text)
+
+    next_week_phrases = [
+        "proxima semana",
+        "semana que vem",
+        "next week",
+    ]
+
+    if any(phrase in normalized for phrase in next_week_phrases):
+        return False
+
+    current_week_phrases = [
+        "esta semana",
+        "nesta semana",
+        "durante esta semana",
+        "ate domingo",
+        "this week",
+    ]
+
+    return any(phrase in normalized for phrase in current_week_phrases)
+
+
+def days_until_sunday(base_datetime):
+    # Monday = 0, Sunday = 6.
+    # Inclusive count: Tuesday -> Tue, Wed, Thu, Fri, Sat, Sun = 6 days.
+    return max(1, 7 - base_datetime.weekday())
+
+
+def get_planning_days_for_request(default_days, original_message, base_datetime):
+    default_days = int(default_days or 7)
+
+    if has_current_week_phrase(original_message):
+        return min(default_days, days_until_sunday(base_datetime))
+
+    return default_days
+
+
+def has_explicit_time(text):
+    normalized = normalize_text(text)
+
+    explicit_patterns = [
+        r"\b\d{1,2}:\d{2}\b",
+        r"\b\d{1,2}h\d{0,2}\b",
+        r"\b(?:as|das|pelas|por volta das|a partir das)\s+\d{1,2}\b",
+        r"\bmeio dia\b",
+        r"\bmeia noite\b",
+    ]
+
+    return any(re.search(pattern, normalized) for pattern in explicit_patterns)
+
+
+def round_up_to_next_15_from_main(value):
+    minute = ((value.minute + 14) // 15) * 15
+
+    if minute == 60:
+        return value.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+
+    return value.replace(minute=minute, second=0, microsecond=0)
+
+
+def get_next_available_slot_for_today(duration_minutes, preferences, now):
+    horizon = now.replace(hour=23, minute=59, second=0, microsecond=0)
+
+    busy_periods = get_free_busy(
+        now.isoformat(),
+        horizon.isoformat()
+    )
+
+    slots = find_slots_for_task(
+        busy_periods=busy_periods,
+        duration_minutes=duration_minutes,
+        sessions_count=1,
+        days=1,
+        base_preferences=preferences,
+        task_preferences={
+            "frequency": "weekly",
+            "allowed_days": "any",
+            "preferred_time_of_day": "earliest",
+            "preferred_window_start": None,
+            "preferred_window_end": None,
+        }
+    )
+
+    if slots:
+        return isoparse(slots[0]["start"]), isoparse(slots[0]["end"])
+
+    fallback_start = round_up_to_next_15_from_main(now)
+    fallback_end = fallback_start + timedelta(minutes=duration_minutes)
+
+    return fallback_start, fallback_end
+
+
+def adjust_today_datetime_if_needed(start_datetime, duration_minutes, original_context, preferences, now):
+    if start_datetime.date() != now.date():
+        return start_datetime, start_datetime + timedelta(minutes=duration_minutes)
+
+    if start_datetime >= now:
+        return start_datetime, start_datetime + timedelta(minutes=duration_minutes)
+
+    # If the user explicitly gave a time, respect it even if it is earlier today.
+    if has_explicit_time(original_context):
+        return start_datetime, start_datetime + timedelta(minutes=duration_minutes)
+
+    # Otherwise, never create an event earlier than the current time today.
+    return get_next_available_slot_for_today(
+        duration_minutes=duration_minutes,
+        preferences=preferences,
+        now=now
+    )
+
+
+def get_context_for_task(task, original_message):
+    message_normalized = normalize_text(original_message)
+    title_normalized = normalize_text(task.get("title") or "")
+
+    keywords = [
+        word for word in re.findall(r"[a-z0-9]+", title_normalized)
+        if len(word) >= 4 and word not in {
+            "com",
+            "para",
+            "tenho",
+            "quero",
+            "preciso",
+            "minutos",
+            "todos",
+            "dias",
+            "esta",
+            "semana",
+        }
+    ]
+
+    category = task.get("category") or ""
+
+    if category == "relationship":
+        keywords.extend(["date", "namorado", "namorada", "casal"])
+    elif category == "personal":
+        keywords.extend(["cinema", "amigos", "jantar"])
+    elif category == "errand":
+        keywords.extend(["comprar", "ovos", "compras"])
+    elif category == "exercise":
+        keywords.extend(["ginasio", "treino"])
+    elif category == "hobby":
+        keywords.extend(["piano", "praticar"])
+
+    positions = [
+        message_normalized.find(keyword)
+        for keyword in keywords
+        if keyword and message_normalized.find(keyword) != -1
+    ]
+
+    if not positions:
+        return message_normalized
+
+    position = min(positions)
+
+    # Find the local phrase for this task only.
+    # This prevents "cinema na sexta das 21:00 às 23:00" from leaking into
+    # "piano", "ginásio" or "comprar ovos" in the same long request.
+    rough_start = max(0, position - 120)
+    rough_end = min(len(message_normalized), position + 220)
+
+    previous_separators = [
+        ". ",
+        "; ",
+        ", tenho ",
+        ", preciso ",
+        ", quero ",
+        " e tenho ",
+        " e preciso ",
+        " e quero ",
+        " e um ",
+        " e uma ",
+        " tenho ",
+        " preciso ",
+        " quero ",
+    ]
+
+    next_separators = [
+        ". ",
+        "; ",
+        ", tenho ",
+        ", preciso ",
+        ", quero ",
+        " e tenho ",
+        " e preciso ",
+        " e quero ",
+        " e um ",
+        " e uma ",
+    ]
+
+    start = rough_start
+
+    for separator in previous_separators:
+        separator_position = message_normalized.rfind(separator, rough_start, position)
+
+        if separator_position != -1:
+            start = max(start, separator_position + len(separator))
+
+    end = rough_end
+
+    for separator in next_separators:
+        separator_position = message_normalized.find(separator, position + 1, rough_end)
+
+        if separator_position != -1:
+            end = min(end, separator_position)
+
+    return message_normalized[start:end]
+
+
+def extract_time_range_from_text(text_value):
+    normalized = normalize_text(text_value)
+
+    # Matches:
+    # "das 21:00 as 23:00"
+    # "21:00 às 23:00"
+    # "21h as 23h"
+    # "21-23"
+    pattern = (
+        r"(?:das|de|entre)?\s*"
+        r"(\d{1,2})(?::(\d{2})|h(\d{2})?)?"
+        r"\s*(?:as|a|ate|-)\s*"
+        r"(\d{1,2})(?::(\d{2})|h(\d{2})?)?"
+    )
+
+    match = re.search(pattern, normalized)
+
+    if not match:
+        return None
+
+    start_hour = int(match.group(1))
+    start_minute = int(match.group(2) or match.group(3) or 0)
+    end_hour = int(match.group(4))
+    end_minute = int(match.group(5) or match.group(6) or 0)
+
+    return start_hour, start_minute, end_hour, end_minute
+
+
+def next_weekday_datetime(base_datetime, target_weekday, hour, minute):
+    days_ahead = target_weekday - base_datetime.weekday()
+
+    if days_ahead < 0:
+        days_ahead += 7
+
+    candidate_date = (base_datetime + timedelta(days=days_ahead)).date()
+    candidate_datetime = datetime.combine(candidate_date, datetime.min.time(), TZ)
+    candidate_datetime = candidate_datetime.replace(hour=hour, minute=minute)
+
+    if candidate_datetime <= base_datetime:
+        candidate_datetime = candidate_datetime + timedelta(days=7)
+
+    return candidate_datetime
+
+
+def infer_fixed_datetime_from_task_context(task, original_message, base_datetime):
+    context = get_context_for_task(task, original_message)
+    context_normalized = normalize_text(context)
+
+    weekdays = {
+        "segunda": 0,
+        "terca": 1,
+        "quarta": 2,
+        "quinta": 3,
+        "sexta": 4,
+        "sabado": 5,
+        "domingo": 6,
+    }
+
+    target_weekday = None
+
+    for weekday_name, weekday_number in weekdays.items():
+        if weekday_name in context_normalized:
+            target_weekday = weekday_number
+            break
+
+    if target_weekday is None:
+        if "amanha" in context_normalized:
+            target_weekday = (base_datetime + timedelta(days=1)).weekday()
+        elif "hoje" in context_normalized:
+            target_weekday = base_datetime.weekday()
+        else:
+            return None, None, context
+
+    time_range = extract_time_range_from_text(context_normalized)
+
+    if time_range:
+        start_hour, start_minute, end_hour, end_minute = time_range
+
+        start_datetime = next_weekday_datetime(
+            base_datetime,
+            target_weekday,
+            start_hour,
+            start_minute
+        )
+
+        end_datetime = next_weekday_datetime(
+            base_datetime,
+            target_weekday,
+            end_hour,
+            end_minute
+        )
+
+        if end_datetime <= start_datetime:
+            end_datetime = end_datetime + timedelta(days=1)
+
+        inferred_duration_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+        return start_datetime, inferred_duration_minutes, context
+
+    preferred_time_of_day = task.get("preferred_time_of_day")
+    title = task.get("title") or ""
+    category = task.get("category") or "personal"
+
+    if "manha" in context_normalized:
+        preferred_time_of_day = "morning"
+    elif "tarde" in context_normalized:
+        preferred_time_of_day = "afternoon"
+    elif "noite" in context_normalized:
+        preferred_time_of_day = "evening"
+
+    hour, minute = default_time_for_task(
+        title=title,
+        category=category,
+        preferred_time_of_day=preferred_time_of_day
+    )
+
+    start_datetime = next_weekday_datetime(
+        base_datetime,
+        target_weekday,
+        hour,
+        minute
+    )
+
+    return start_datetime, None, context
 
 
 app = FastAPI()
@@ -198,7 +539,7 @@ def assistant(request: AssistantRequest):
                 busy_periods=busy_periods,
                 duration_minutes=duration_minutes,
                 sessions_count=1,
-                days=7,
+                days=get_planning_days_for_request(7, request.message, now),
                 base_preferences=preferences,
                 task_preferences={
                     "frequency": "weekly",
@@ -225,7 +566,29 @@ def assistant(request: AssistantRequest):
             if start_datetime.tzinfo is None:
                 start_datetime = start_datetime.replace(tzinfo=TZ)
 
-            end_datetime = start_datetime + timedelta(minutes=duration_minutes)
+            inferred_start_datetime, inferred_duration_minutes, task_context = infer_fixed_datetime_from_task_context(
+                task={
+                    "title": title,
+                    "category": category,
+                    "preferred_time_of_day": action.get("preferred_time_of_day")
+                },
+                original_message=request.message,
+                base_datetime=datetime.now(TZ)
+            )
+
+            if inferred_start_datetime:
+                start_datetime = inferred_start_datetime
+
+                if inferred_duration_minutes:
+                    duration_minutes = inferred_duration_minutes
+
+            start_datetime, end_datetime = adjust_today_datetime_if_needed(
+                start_datetime=start_datetime,
+                duration_minutes=duration_minutes,
+                original_context=request.message,
+                preferences=preferences,
+                now=datetime.now(TZ)
+            )
 
         reminder_minutes = 10
 
@@ -258,7 +621,7 @@ def assistant(request: AssistantRequest):
             }
 
         now = datetime.now(TZ)
-        days = 7
+        days = get_planning_days_for_request(7, request.message, now)
         horizon = now + timedelta(days=days)
 
         working_busy_periods = get_free_busy(
@@ -295,13 +658,21 @@ def assistant(request: AssistantRequest):
             title = task.get("title") or "Scheduled task"
             duration_minutes = int(task.get("duration_minutes") or 30)
             sessions_count = int(task.get("sessions_count") or 1)
-            task_days = int(task.get("days") or 7)
+            task_days = get_planning_days_for_request(
+                task.get("days") or days,
+                request.message,
+                now
+            )
             category = task.get("category") or "personal"
 
             # Create this list before any branch uses it.
             task_created_events = []
 
             task_frequency = task.get("frequency") or "weekly"
+
+            if task_frequency == "daily" and has_current_week_phrase(request.message):
+                sessions_count = min(sessions_count, task_days)
+
             preferred_window_start = task.get("preferred_window_start")
 
             # Handle one-off events inside a multi-task weekly plan.
@@ -321,10 +692,40 @@ def assistant(request: AssistantRequest):
                 preferred_time_of_day=task.get("preferred_time_of_day")
             )
 
+            inferred_start_datetime, inferred_duration_minutes, task_context = infer_fixed_datetime_from_task_context(
+                task=task,
+                original_message=request.message,
+                base_datetime=now
+            )
+
+            # Important:
+            # Only fixed/one-off events should be overridden by weekday/date phrases.
+            # Recurring tasks like piano every day or gym 3x/week must stay flexible
+            # and go through the scheduler.
+            is_recurring_task = (
+                task_frequency in ["daily", "weekly"]
+                and sessions_count > 1
+            )
+
+            if inferred_start_datetime and not is_recurring_task:
+                fixed_start_datetime = inferred_start_datetime
+
+                if inferred_duration_minutes:
+                    duration_minutes = inferred_duration_minutes
+
+                task_frequency = "once"
+
             if task_frequency == "once" and fixed_start_datetime:
                 try:
                     start_datetime = fixed_start_datetime
-                    end_datetime = start_datetime + timedelta(minutes=duration_minutes)
+
+                    start_datetime, end_datetime = adjust_today_datetime_if_needed(
+                        start_datetime=start_datetime,
+                        duration_minutes=duration_minutes,
+                        original_context=task_context,
+                        preferences=preferences,
+                        now=datetime.now(TZ)
+                    )
 
                     created_event = create_calendar_event(
                         title=title,
@@ -402,9 +803,13 @@ def assistant(request: AssistantRequest):
     if action_type == "schedule_habit":
         title = action.get("title") or "Habit"
         duration_minutes = action.get("duration_minutes") or 20
-        days = action.get("days") or 7
 
         now = datetime.now(TZ)
+        days = get_planning_days_for_request(
+            action.get("days") or 7,
+            request.message,
+            now
+        )
         horizon = now + timedelta(days=days)
 
         busy_periods = get_free_busy(
