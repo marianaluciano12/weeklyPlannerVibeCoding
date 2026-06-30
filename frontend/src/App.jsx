@@ -26,11 +26,11 @@ function App() {
   const [createdPlanEvents, setCreatedPlanEvents] = useState([]);
 
   const [preferences, setPreferences] = useState({
-    day_start: "07:00",
+    day_start: "08:00",
     work_start: "09:00",
     work_end: "17:00",
-    weekend_start: "10:00",
-    weekend_end: "22:00",
+    weekend_start: "11:00",
+    weekend_end: "23:00",
     minimum_gap_minutes: 15,
     default_reminder_minutes: 10,
     preferred_time_of_day: "balanced",
@@ -710,14 +710,6 @@ function App() {
             </div>
 
             <div className="event-modal-actions bottom-actions">
-              <button
-                type="button"
-                className="event-action-button secondary"
-                onClick={editSelectedEvent}
-              >
-                Editar evento
-              </button>
-
               <button
                 type="button"
                 className="event-action-button danger"
