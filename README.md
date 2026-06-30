@@ -60,6 +60,79 @@ Também precisas de ter as credenciais OAuth do Google Calendar configuradas no 
 
 ---
 
+## Configurar autenticação do Google Calendar
+
+Para a aplicação conseguir aceder ao teu Google Calendar, precisas de adicionar o ficheiro de credenciais OAuth do Google ao projeto.
+
+### 1. Criar credenciais no Google Cloud
+
+No Google Cloud Console:
+
+1. Abre o teu projeto.
+2. Ativa a **Google Calendar API**.
+3. Vai a **APIs & Services** → **Credentials**.
+4. Cria credenciais do tipo **OAuth client ID**.
+5. Escolhe **"Desktop app"**.
+6. Faz download do ficheiro JSON das credenciais.
+
+### 2. Renomear o ficheiro
+
+Depois de fazeres download, renomeia o ficheiro para:
+
+```txt
+credentials.json
+```
+
+### 3. Colocar o ficheiro no backend
+
+Coloca o ficheiro dentro da pasta `backend`:
+
+```txt
+backend/
+  credentials.json
+  main.py
+  llm_service.py
+  calendar_service.py
+  scheduler.py
+  models.py
+  requirements.txt
+  .env
+```
+
+O caminho esperado deve ser:
+
+```txt
+backend/credentials.json
+```
+
+### 4. Primeira autenticação
+
+Na primeira vez que correres a aplicação, o backend pode abrir uma janela do browser para iniciares sessão com a tua conta Google e autorizares o acesso ao calendário.
+
+Depois da autenticação, o projeto pode criar um ficheiro de sessão/token, dependendo da implementação do teu `calendar_service.py`.
+
+Não partilhes estes ficheiros:
+
+```txt
+credentials.json
+token.json
+.env
+```
+
+### 5. Importante
+
+O ficheiro `credentials.json` deve ficar apenas no teu computador. Não o publiques no GitHub.
+
+Adiciona estes ficheiros ao `.gitignore`:
+
+```txt
+backend/credentials.json
+backend/token.json
+backend/.env
+```
+
+---
+
 ## Instalar dependências do backend
 
 A partir da raiz do projeto:
@@ -119,7 +192,7 @@ http://localhost:5173
 ### Lembretes simples
 
 ```txt
-Tenho de comprar ovos amanhã
+Tenho de comprar ovos
 ```
 
 ```txt
@@ -143,7 +216,7 @@ Tenho um date com o meu namorado no domingo à tarde
 ### Hábitos e planos recorrentes
 
 ```txt
-Quero praticar piano 20 min por dia todos os dias nesta semana
+Quero praticar piano 20 min por dia nesta semana
 ```
 
 ```txt
@@ -179,7 +252,7 @@ Quero praticar piano antes do trabalho amanhã
 ### Exemplo complexo
 
 ```txt
-Quero ir ao ginasio 3 vezes esta semana (prefiro de manhã), quero praticar piano 20 min todos os dias e preciso de comprar ovos amanhã depois do meu evento de piano. Tenho cinema com amigos na sexta das 21:00 as 23:00 e um date com o meu namorado no domingo à tarde
+Quero ir ao ginasio 3 vezes esta semana (prefiro de manhã), quero praticar piano 20 min todos os dias e preciso de comprar ovos hoje depois do meu evento de piano. Tenho cinema com amigos na sexta das 21:00 as 23:00 e um date com o meu namorado no domingo à tarde
 ```
 
 Comportamento esperado:
