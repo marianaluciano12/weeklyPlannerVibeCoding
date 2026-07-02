@@ -9,3 +9,4 @@ google-genai
 python-dateutil
 tzdata
 openai
+python-telegram-bot
