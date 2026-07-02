@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 from pathlib import Path
 from typing import Optional
@@ -136,26 +138,108 @@ def format_event_title(title: str, category: str) -> str:
     return f"{emoji} {title}"
 
 
-def get_calendar_service():
-    creds = None
+def _load_json_from_environment(
+    json_variable: str,
+    base64_variable: str,
+) -> dict | None:
+    raw_json = os.getenv(json_variable)
+
+    if raw_json:
+        return json.loads(raw_json)
+
+    encoded_json = os.getenv(base64_variable)
+
+    if encoded_json:
+        decoded = base64.b64decode(encoded_json).decode("utf-8")
+        return json.loads(decoded)
+
+    return None
+
+
+def _load_token_credentials() -> Credentials | None:
+    token_info = _load_json_from_environment(
+        "GOOGLE_TOKEN_JSON",
+        "GOOGLE_TOKEN_BASE64",
+    )
+
+    if token_info:
+        return Credentials.from_authorized_user_info(token_info, SCOPES)
 
     if TOKEN_PATH.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+        return Credentials.from_authorized_user_file(
+            str(TOKEN_PATH),
+            SCOPES,
+        )
+
+    return None
+
+
+def _load_oauth_client_config() -> dict | None:
+    credentials_info = _load_json_from_environment(
+        "GOOGLE_CREDENTIALS_JSON",
+        "GOOGLE_CREDENTIALS_BASE64",
+    )
+
+    if credentials_info:
+        return credentials_info
+
+    if CREDENTIALS_PATH.exists():
+        return json.loads(
+            CREDENTIALS_PATH.read_text(encoding="utf-8")
+        )
+
+    return None
+
+
+def _save_token_locally(creds: Credentials) -> None:
+    cloud_mode = os.getenv("CLOUD_MODE", "false").lower() == "true"
+
+    if cloud_mode:
+        return
+
+    TOKEN_PATH.write_text(
+        creds.to_json(),
+        encoding="utf-8",
+    )
+
+
+def get_calendar_service():
+    creds = _load_token_credentials()
+    cloud_mode = os.getenv("CLOUD_MODE", "false").lower() == "true"
+
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        _save_token_locally(creds)
 
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                str(CREDENTIALS_PATH),
-                SCOPES
+        if cloud_mode:
+            raise RuntimeError(
+                "Não existem credenciais Google válidas na cloud. "
+                "Gera primeiro o token.json localmente e configura "
+                "GOOGLE_TOKEN_BASE64 ou GOOGLE_TOKEN_JSON."
             )
-            creds = flow.run_local_server(port=0)
 
-        with open(TOKEN_PATH, "w") as token:
-            token.write(creds.to_json())
+        client_config = _load_oauth_client_config()
 
-    return build("calendar", "v3", credentials=creds)
+        if not client_config:
+            raise FileNotFoundError(
+                "Não foi encontrado credentials.json na pasta backend."
+            )
+
+        flow = InstalledAppFlow.from_client_config(
+            client_config,
+            SCOPES,
+        )
+
+        creds = flow.run_local_server(port=0)
+        _save_token_locally(creds)
+
+    return build(
+        "calendar",
+        "v3",
+        credentials=creds,
+        cache_discovery=False,
+    )
 
 
 def list_calendar_events(time_min: str, time_max: str):
